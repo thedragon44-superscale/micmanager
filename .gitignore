@@ -1,0 +1,47 @@
+# --- SECRETS & ENVIRONMENT FILES ---
+.env
+.env.*
+*.env
+backend/.env
+
+# --- PYTHON & BACKEND (backend/) ---
+venv/
+*/venv/
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# --- DATABASES & LOCAL STORAGE ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- FRONTEND & NODE ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --- LOGS ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- EDITORS & OS FILES ---
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
