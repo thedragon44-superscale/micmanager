@@ -70,7 +70,7 @@ export default function AvatarUploader({ userId, currentAvatar, onUploadSuccess 
       const formData = new FormData();
       formData.append('file', compressedFile);
 
-      const res = await fetch(`http://127.0.0.1:8000/users/${userId}/avatar`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/${userId}/avatar`, {
         method: 'POST',
         body: formData,
       });

@@ -100,7 +100,7 @@ export default function AudioRecorder({ onRecordingComplete }) {
     if (activeEventId) formData.append('event_id', activeEventId);
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${authUserId}/audio`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/${authUserId}/audio`, {
         method: 'POST',
         body: formData
       });

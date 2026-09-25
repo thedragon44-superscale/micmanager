@@ -1,65 +1,78 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-
-// Context Providers
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import { MicProvider } from './MicContext';
+import { Toaster } from 'react-hot-toast';
 
-// Layout Components
-import Header from './components/Header';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import GlobalAudioGuard from './components/GlobalAudioGuard';
-
-// Pages
+// Import Pages
 import Landing from './pages/Landing';
-import Ticket from './pages/Ticket';
-import Signup from './pages/Signup';
-import HostDashboard from './pages/HostDashboard';
-import LiveStage from './pages/LiveStage';
-import ListMic from './pages/ListMic';
-import MyProfile from './pages/MyProfile';
 import Scene from './pages/Scene';
 import Inbox from './pages/Inbox';
+import MyProfile from './pages/MyProfile';
+import HostDashboard from './pages/HostDashboard';
+import Ticket from './pages/Ticket';
+import Signup from './pages/Signup';
+import ListMic from './pages/ListMic';
 import Chat from './pages/Chat';
+import LiveStage from './pages/LiveStage';
 
-function App() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
+// Import Global Components
+import Header from './components/Header';
+import BottomNav from './components/BottomNav';
+import GlobalAudioGuard from './components/GlobalAudioGuard';
 
+export default function App() {
   return (
-    <AuthProvider>
-      <MicProvider>
-        <Router>
-          <div className="flex flex-col h-[100dvh] w-full max-w-md mx-auto bg-slate-950 text-slate-100 overflow-hidden font-sans border-x border-slate-900 shadow-2xl relative">
-            <Toaster position="top-center" toastOptions={{ className: 'bg-slate-800 text-slate-100' }} />
+    <Router>
+      <AuthProvider>
+        <MicProvider>
+          {/* Main App Container */}
+          <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col pb-20 font-sans selection:bg-blue-500/30">
             
-            <Header toggleNav={() => setIsNavOpen(!isNavOpen)} />
-            <Navbar isOpen={isNavOpen} closeNav={() => setIsNavOpen(false)} />
-            
-            {/* Global Audio Guard mounted here persists across all route changes */}
+            {/* Global Persistent Header (Market, Live Stage Icon, Ticket Number) */}
+            <Header />
+
+            {/* Persistent Audio Guard (Runs audio recording in background across all pages) */}
             <GlobalAudioGuard />
 
-            <main className="flex-1 overflow-y-auto w-full flex flex-col relative">
+            {/* Main Content Area */}
+            <main className="flex-1 w-full max-w-md mx-auto relative flex flex-col">
               <Routes>
+                {/* Core Navigation Tabs */}
                 <Route path="/" element={<Landing />} />
-                <Route path="/ticket" element={<Ticket />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/host" element={<HostDashboard />} />
-                <Route path="/live" element={<LiveStage />} />
-                <Route path="/list-mic" element={<ListMic />} />
-                <Route path="/profile" element={<MyProfile />} />
                 <Route path="/scene" element={<Scene />} />
                 <Route path="/inbox" element={<Inbox />} />
-                <Route path="/chat/:recipientId" element={<Chat />} />
+                <Route path="/profile" element={<MyProfile />} />
+
+                {/* Secondary Utility & Host Routes */}
+                <Route path="/host" element={<HostDashboard />} />
+                <Route path="/ticket" element={<Ticket />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/list-mic" element={<ListMic />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/stage" element={<LiveStage />} />
+
+                {/* Catch-all fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-              <Footer />
             </main>
+
+            {/* Global Mobile Bottom Navigation */}
+            <BottomNav />
+            
+            <Toaster position="top-center" toastOptions={{
+              style: { 
+                background: '#0f172a', 
+                color: '#f1f5f9', 
+                border: '1px solid #1e293b', 
+                fontSize: '12px', 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.05em' 
+              }
+            }} />
           </div>
-        </Router>
-      </MicProvider>
-    </AuthProvider>
+        </MicProvider>
+      </AuthProvider>
+    </Router>
   );
 }
-
-export default App;

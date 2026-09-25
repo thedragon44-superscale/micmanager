@@ -1,259 +1,309 @@
 import { useState, useEffect } from 'react';
-import ProfileCard from '../components/ProfileCard';
 import { useMic } from '../MicContext';
-import { useAuth } from '../AuthContext';
+import ProfileCard from '../components/ProfileCard';
 import toast from 'react-hot-toast';
 
 export default function Scene() {
-  const { user } = useAuth();
-  const { myComicProfile, market } = useMic();
-  const [activeTab, setActiveTab] = useState('feed');
-  const [users, setUsers] = useState([]);
-  const [feed, setFeed] = useState([]);
+  const { market, myComicProfile } = useMic();
+  const [activeTab, setActiveTab] = useState('feed'); // Feed default on left
+  const [directory, setDirectory] = useState([]);
+  const [feedPosts, setFeedPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [postContent, setPostContent] = useState('');
-  const [isPosting, setIsPosting] = useState(false);
+  const [newPostText, setNewPostText] = useState('');
+  const [selectedComicId, setSelectedComicId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch Directory & Feed Data
   useEffect(() => {
-    fetchDirectory();
-    fetchFeed();
+    fetch(`${import.meta.env.VITE_API_URL}/directory?market=${market}`)
+      .then(res => res.json())
+      .then(data => setDirectory(data || []))
+      .catch(err => console.error('Directory fetch error:', err));
+
+    fetch(`${import.meta.env.VITE_API_URL}/feed?market=${market}`)
+      .then(res => res.json())
+      .then(data => setFeedPosts(data || []))
+      .catch(err => console.error('Feed fetch error:', err));
   }, [market]);
 
-  const fetchDirectory = () => {
-    fetch(`http://127.0.0.1:8000/directory?market=${market}`)
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => console.error("Failed to load directory", err));
-  };
-
-  const fetchFeed = () => {
-    fetch(`http://127.0.0.1:8000/feed?market=${market}`)
-      .then(res => res.json())
-      .then(data => setFeed(data))
-      .catch(err => console.error("Failed to load feed", err));
-  };
-
-  const handlePostSubmit = async (e) => {
+  // Handle New Feed Post
+  const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!postContent.trim() || !user) return;
-    
-    setIsPosting(true);
-    // Safely extract the ID from the decoded JWT token
-    const authUserId = user.user_id || user.id; 
-    
+    if (!newPostText.trim() || !myComicProfile) return;
+
+    setIsSubmitting(true);
+    const postPayload = {
+      author_id: myComicProfile.id,
+      author_name: myComicProfile.name,
+      content: newPostText.trim(),
+      market: market
+    };
+
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${authUserId}/feed`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/feed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: postContent })
+        body: JSON.stringify(postPayload)
       });
-      
+
       if (res.ok) {
-        setPostContent('');
-        fetchFeed();
-        toast.success("Posted to the feed!");
+        const createdPost = await res.json();
+        setFeedPosts(prev => [createdPost, ...prev]);
+        setNewPostText('');
+        toast.success("Post dropped to the scene feed!");
       } else {
-        toast.error("Failed to post.");
+        toast.error("Failed to post");
       }
     } catch (err) {
-      toast.error("Network error.");
+      console.error(err);
+      toast.error("Network error");
     } finally {
-      setIsPosting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleLikePost = async (postId) => {
+    try {
+      setFeedPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return { ...p, likes: (p.likes || 0) + 1, userLiked: true };
+        }
+        return p;
+      }));
+
+      await fetch(`${import.meta.env.VITE_API_URL}/feed/${postId}/like`, { method: 'POST' });
+    } catch (err) {
+      console.error('Like error:', err);
+    }
+  };
+
+  // Safe Property Resolution for Filter Search
+  const filteredDirectory = directory.filter(comic => {
+    if (!comic) return false;
+    const name = comic.name || comic.comic_name || comic.username || comic.display_name || '';
+    const bio = comic.bio || comic.about || '';
+    const query = searchQuery.toLowerCase();
+    return name.toLowerCase().includes(query) || bio.toLowerCase().includes(query);
+  });
 
   return (
-    <div className="p-4 sm:p-6 flex flex-col gap-4 animate-fade-in flex-1 h-full relative">
+    <div className="p-4 sm:p-5 flex flex-col gap-5 animate-fade-in max-w-md mx-auto w-full flex-1">
       
-      {/* HEADER & TOGGLE */}
-      <div className="shrink-0 mb-2">
-        <h2 className="text-2xl font-black text-slate-100 uppercase tracking-tight mb-4">The Scene</h2>
-        
-        <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-1">
-          <button 
+      {/* PAGE TITLE & SUB-NAV */}
+      <div className="flex flex-col gap-3 border-b border-slate-800/80 pb-3 mt-1">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span className="text-[10px] font-mono-data uppercase tracking-widest text-blue-400 font-bold">Local Community</span>
+          </div>
+          <h1 className="text-3xl font-black text-white uppercase tracking-tight font-display">The Scene</h1>
+        </div>
+
+        {/* TAB SWITCHER: FEED ON LEFT, COMICS ON RIGHT */}
+        <div className="flex bg-slate-900/90 border border-slate-800 p-1 rounded-2xl">
+          <button
             onClick={() => setActiveTab('feed')}
-            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'feed' 
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' 
-                : 'text-slate-500 hover:text-slate-300'
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'feed'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/50 font-mono-data'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Social Feed
+            <i className="fa-solid fa-fire mr-1.5"></i> Feed
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('directory')}
-            className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'directory' 
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
-                : 'text-slate-500 hover:text-slate-300'
+            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'directory'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-950/50 font-mono-data'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Directory
+            <i className="fa-solid fa-users mr-1.5"></i> Comics ({directory.length})
           </button>
         </div>
       </div>
 
-      {/* CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-3 pb-20">
-        
-        {activeTab === 'feed' && (
-          <div className="flex flex-col gap-3 mt-2">
-            
-            {/* POST INPUT */}
-            {user ? (
-              <form onSubmit={handlePostSubmit} className="bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-md flex gap-2 shrink-0">
-                <input 
-                  type="text" 
-                  value={postContent}
-                  onChange={(e) => setPostContent(e.target.value)}
-                  placeholder="What's happening in the scene?" 
-                  className="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium rounded-lg py-2 px-3 focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <button 
-                  type="submit" 
-                  disabled={isPosting || !postContent.trim()}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
-                >
-                  {isPosting ? '...' : 'Post'}
-                </button>
-              </form>
-            ) : (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-center shrink-0">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Log in to post to the feed</span>
-              </div>
-            )}
-
-            {/* FEED TIMELINE */}
-            <div className="flex flex-col gap-3 pb-4">
-              {feed.length === 0 ? (
-                <div className="text-center text-slate-500 py-10 font-mono text-xs uppercase tracking-widest border border-slate-800 rounded-2xl bg-slate-900/30">
-                  The feed is quiet.
-                </div>
-              ) : (
-                feed.map(post => {
-                  const isSystem = post.post_type !== 'user';
-                  const dateObj = new Date(post.created_at);
-                  
-                  return (
-                    <div key={post.id} className={`p-4 rounded-xl border ${isSystem ? 'bg-blue-950/10 border-blue-900/30' : 'bg-slate-900 border-slate-800'} shadow-sm`}>
-                      {isSystem ? (
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 w-8 h-8 rounded-full bg-blue-900/30 border border-blue-500/50 flex items-center justify-center shrink-0">
-                            <i className={`fa-solid ${post.post_type === 'mic_listed' ? 'fa-calendar-plus text-blue-400' : post.post_type === 'mic_started' ? 'fa-bolt text-amber-400' : 'fa-flag-checkered text-emerald-400'} text-xs`}></i>
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-200 leading-relaxed">{post.content}</p>
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mt-1.5">
-                              {dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • System Alert
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-2">
-                          <div 
-                            className="flex items-center gap-2 cursor-pointer group w-max"
-                            onClick={() => post.author && setSelectedUserId(post.author.id)}
-                          >
-                            {post.author?.avatar_url ? (
-                              <img src={post.author.avatar_url} alt={post.author.username} className="w-6 h-6 rounded-full border border-slate-700 object-cover" />
-                            ) : (
-                              <div className="w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 font-black text-[10px]">
-                                {post.author?.username?.substring(0, 2).toUpperCase() || '?'}
-                              </div>
-                            )}
-                            <span className="text-xs font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">
-                              {post.author?.username || 'Unknown Comic'}
-                            </span>
-                            {post.author?.is_host && (
-                              <span className="bg-amber-950/50 text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-900/50 uppercase tracking-widest ml-1">
-                                Host
-                              </span>
-                            )}
-                            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-2">
-                              {dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-200 pl-8">{post.content}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'directory' && (
-          <>
-            <div className="relative mb-2 shrink-0">
-              <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-              <input 
-                type="text" 
-                placeholder="SEARCH COMICS..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs font-black uppercase tracking-widest rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-blue-500 transition-colors"
+      {/* --- TAB 1: SCENE FEED (DEFAULT VIEW) --- */}
+      {activeTab === 'feed' && (
+        <div className="flex flex-col gap-4 animate-fade-in">
+          
+          {/* CREATE POST INPUT BOX */}
+          {myComicProfile ? (
+            <form onSubmit={handleCreatePost} className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl flex flex-col gap-3 shadow-lg">
+              <textarea
+                value={newPostText}
+                onChange={(e) => setNewPostText(e.target.value)}
+                placeholder="Share set notes, mic updates, or crowd talk..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none h-20"
+                maxLength={280}
               />
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-[10px] font-mono-data text-slate-500">
+                  {280 - newPostText.length} chars left
+                </span>
+                <button
+                  type="submit"
+                  disabled={!newPostText.trim() || isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-black text-xs px-4 py-2 rounded-xl uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-blue-950/50"
+                >
+                  Post to Scene
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-slate-900/50 border border-dashed border-slate-800 p-4 rounded-2xl text-center">
+              <p className="text-xs text-slate-400">Sign up on tonight's mic list to post to the local feed.</p>
             </div>
-            
-            {filteredUsers.length === 0 ? (
-              <div className="text-center text-slate-500 py-10 font-mono text-xs uppercase tracking-widest">
-                No comics found.
+          )}
+
+          {/* FEED POSTS LIST */}
+          <div className="flex flex-col gap-3">
+            {feedPosts.length === 0 ? (
+              <div className="text-center text-slate-500 py-12 font-mono-data text-xs uppercase tracking-widest border border-dashed border-slate-800 rounded-2xl bg-slate-950/50">
+                No scene posts in {market.replace('_', ' ')} yet.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-2">
-                {filteredUsers.map(user => (
-                  <div 
-                    key={user.id} 
-                    onClick={() => setSelectedUserId(user.id)}
-                    className="bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all active:scale-95 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      {user.avatar_url ? (
-                        <img src={user.avatar_url} alt={user.username} className="w-10 h-10 rounded-full border border-slate-700 object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 bg-indigo-900/50 border border-indigo-500/30 rounded-full flex items-center justify-center text-indigo-400 font-black text-xs">
-                          {user.username.substring(0, 2).toUpperCase()}
+              feedPosts.map((post, idx) => {
+                const authorName = post.author_name || post.user_name || post.name || post.username || 'System Feed';
+                const authorId = post.author_id || post.user_id || post.comic_id;
+
+                return (
+                  <div key={post.id || idx} className="bg-slate-900/80 border border-slate-800/80 p-4 rounded-2xl flex flex-col gap-3 shadow-md">
+                    
+                    {/* Author Header */}
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={() => authorId && setSelectedComicId(authorId)}
+                        className="font-bold text-xs text-white hover:text-blue-400 transition-colors flex items-center gap-2"
+                      >
+                        <div className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center font-display font-black text-blue-400 text-xs">
+                          {authorName.charAt(0).toUpperCase()}
                         </div>
-                      )}
+                        <span>{authorName}</span>
+                      </button>
+                      <span className="text-[9px] font-mono-data text-slate-500">
+                        {post.timestamp || 'Just now'}
+                      </span>
+                    </div>
+
+                    {/* Post Content */}
+                    <p className="text-xs text-slate-200 font-medium leading-relaxed">
+                      {post.content || post.text || post.message}
+                    </p>
+
+                    {/* Footer Actions */}
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-800/60">
+                      <button
+                        onClick={() => handleLikePost(post.id)}
+                        className={`flex items-center gap-1.5 text-xs font-mono-data font-bold transition-all active:scale-95 ${
+                          post.userLiked ? 'text-red-400' : 'text-slate-500 hover:text-slate-300'
+                        }`}
+                      >
+                        <i className={`fa-heart ${post.userLiked ? 'fa-solid text-red-400' : 'fa-regular'}`}></i>
+                        <span>{post.likes || 0}</span>
+                      </button>
+
+                      <span className="text-[9px] font-mono-data uppercase text-slate-600 tracking-wider">
+                        {market.replace('_', ' ')}
+                      </span>
+                    </div>
+
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* --- TAB 2: COMIC DIRECTORY --- */}
+      {activeTab === 'directory' && (
+        <div className="flex flex-col gap-4 animate-fade-in">
+          
+          {/* SEARCH BAR */}
+          <div className="relative">
+            <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search local comics or bios..."
+              className="w-full bg-slate-900/80 border border-slate-800 rounded-2xl pl-9 pr-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors font-sans"
+            />
+          </div>
+
+          {/* COMICS LIST */}
+          <div className="flex flex-col gap-3">
+            {filteredDirectory.length === 0 ? (
+              <div className="text-center text-slate-500 py-12 font-mono-data text-xs uppercase tracking-widest border border-dashed border-slate-800 rounded-2xl bg-slate-950/50">
+                {searchQuery ? 'No comics matched search.' : `No comics registered in ${market.replace('_', ' ')}.`}
+              </div>
+            ) : (
+              filteredDirectory.map((comic, idx) => {
+                // Key resolution for seed DB format variations
+                const name = comic.name || comic.comic_name || comic.username || comic.display_name || `Comic #${idx + 1}`;
+                const comicId = comic.id || comic.user_id || comic.comic_id;
+                const bio = comic.bio || comic.about || 'Local Standup Performer';
+                const isMe = myComicProfile && (myComicProfile.id === comicId);
+
+                return (
+                  <div
+                    key={comicId || idx}
+                    onClick={() => comicId && setSelectedComicId(comicId)}
+                    className={`bg-slate-900/80 hover:bg-slate-900 border p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all active:scale-95 group ${
+                      isMe ? 'border-blue-500/50 glow-blue' : 'border-slate-800/80 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      {/* Avatar Badge */}
+                      <div className="w-11 h-11 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center font-display font-black text-blue-400 text-base group-hover:border-blue-500/50 transition-colors shrink-0">
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      
                       <div>
-                        <div className="font-bold text-sm text-slate-200 group-hover:text-blue-400 transition-colors">{user.username}</div>
-                        {user.ig_handle && (
-                          <div className="text-[10px] text-slate-500 font-mono">@{user.ig_handle}</div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                            {name}
+                          </h3>
+                          {isMe && (
+                            <span className="text-[9px] font-mono-data font-black bg-blue-950/80 text-blue-400 border border-blue-500/40 px-1.5 py-0.2 rounded uppercase">
+                              YOU
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-medium line-clamp-1 mt-0.5">
+                          {bio}
+                        </p>
                       </div>
                     </div>
-                    {user.is_host && (
-                      <span className="bg-amber-950/50 text-amber-400 text-[8px] font-black px-2 py-1 rounded border border-amber-900/50 uppercase tracking-widest">
-                        Host
-                      </span>
-                    )}
+
+                    <div className="w-7 h-7 rounded-full bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-blue-500/40 transition-colors shrink-0">
+                      <i className="fa-solid fa-chevron-right text-slate-500 text-[10px] group-hover:text-blue-400 transition-colors"></i>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })
             )}
-          </>
-        )}
-      </div>
+          </div>
+
+        </div>
+      )}
 
       {/* PROFILE CARD MODAL */}
-      {selectedUserId && (
-        <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm overflow-y-auto">
+      {selectedComicId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md overflow-y-auto">
           <div className="relative w-full max-w-sm my-auto animate-fade-in flex justify-center">
             <ProfileCard 
-              userId={selectedUserId} 
+              userId={selectedComicId} 
               currentUserId={myComicProfile?.id} 
-              onClose={() => setSelectedUserId(null)} 
+              onClose={() => setSelectedComicId(null)} 
             />
           </div>
         </div>
       )}
+
     </div>
   );
 }

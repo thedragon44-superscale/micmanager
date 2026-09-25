@@ -8,7 +8,7 @@ export function useMic() {
 }
 
 export function MicProvider({ children }) {
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Persistent Host State via LocalStorage
   const [isHostClockedIn, setIsHostClockedInState] = useState(() => {
@@ -200,30 +200,51 @@ export function MicProvider({ children }) {
   };
 
   const endMic = async () => {
+    if (activeEventId) {
+      try {
+        await fetch(`${API_URL}/events/${activeEventId}/end`, { method: 'POST' });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setIsHostClockedIn(false);
+    setActiveEventId(null);
+    setQueue([]);
+  };
+
+  const endSession = async () => {
+    await endMic();
+  };
+
+  const updateComicStatus = async (comicId, status) => {
     if (!activeEventId) return;
     try {
-      await fetch(`${API_URL}/events/${activeEventId}/end`, { method: 'POST' });
-      setIsHostClockedIn(false);
-      setActiveEventId(null);
-      setQueue([]);
+      await fetch(`${API_URL}/events/${activeEventId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comic_id: comicId, status })
+      });
+      await loadQueue(activeEventId);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to update comic status:', err);
     }
   };
 
   const currentComic = queue.find(c => c.status === 'on_stage') || null;
+  const activeMic = activeEventId ? { id: activeEventId, name: 'Live Open Mic' } : null;
 
   const value = {
     market, setMarket,
     isHostClockedIn, setIsHostClockedIn,
     activeEventId, setActiveEventId,
+    activeMic,
     stageSettings, setStageSettings,
     currentComic,
     myComicProfile, setMyComicProfile,
     queue, setQueue,
     timeLeft, setTimeLeft,
     isTimerRunning, setIsTimerRunning,
-    registerComic, advanceQueue, endMic, loadQueue, checkActiveMic, activateMic
+    registerComic, advanceQueue, endMic, endSession, updateComicStatus, loadQueue, checkActiveMic, activateMic
   };
 
   return <MicContext.Provider value={value}>{children}</MicContext.Provider>;

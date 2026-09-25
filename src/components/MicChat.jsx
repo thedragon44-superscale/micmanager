@@ -23,7 +23,7 @@ export default function MicChat() {
   const fetchChat = async () => {
     if (!activeEventId) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/events/${activeEventId}/chat`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/events/${activeEventId}/chat`);
       if (res.ok) setMessages(await res.json());
     } catch (err) { console.error(err); }
   };
@@ -31,7 +31,7 @@ export default function MicChat() {
   useEffect(() => {
     fetchChat();
     if (!activeEventId) return;
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${activeEventId}`);
+    const socket = new WebSocket(`${import.meta.env.VITE_API_URL.replace("http", "ws")}/ws/${activeEventId}`);
     socket.onmessage = (event) => { if (event.data === "REFRESH_CHAT") fetchChat(); };
     return () => { if (socket.readyState === 1) socket.close(); else socket.addEventListener('open', () => socket.close()); };
   }, [activeEventId]);
@@ -50,7 +50,7 @@ export default function MicChat() {
       return false;
     }
     try {
-      await fetch(`http://127.0.0.1:8000/events/${activeEventId}/chat`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/events/${activeEventId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: contentStr, guest_name: identity })
@@ -83,7 +83,7 @@ export default function MicChat() {
 
   const executeSwap = async (senderId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/events/${activeEventId}/swap/execute?target_id=${myComicProfile.id}&sender_id=${senderId}`, { method: 'POST' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/events/${activeEventId}/swap/execute?target_id=${myComicProfile.id}&sender_id=${senderId}`, { method: 'POST' });
       if (res.ok) toast.success("Swap Accepted!");
       else toast.error("Swap failed.");
     } catch (err) { toast.error("Error executing swap."); }

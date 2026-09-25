@@ -10,7 +10,7 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [user, setUser] = useState(null);
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Decode the JWT token to get the user data whenever the token changes
   useEffect(() => {

@@ -17,7 +17,7 @@ export default function SetHistoryLedger() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${authUserId}/history`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/${authUserId}/history`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data);

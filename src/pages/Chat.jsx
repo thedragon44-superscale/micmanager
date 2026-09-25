@@ -23,7 +23,7 @@ export default function Chat() {
     }
 
     // 1. Fetch recipient profile info
-    fetch(`http://127.0.0.1:8000/users/${recipientId}/profile`)
+    fetch(`${import.meta.env.VITE_API_URL}/users/${recipientId}/profile`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setRecipient(data))
       .catch(err => console.error(err));
@@ -41,7 +41,7 @@ export default function Chat() {
   const fetchThread = async () => {
     if (!authUserId || !recipientId) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8000/messages/thread/${authUserId}/${recipientId}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/messages/thread/${authUserId}/${recipientId}`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
@@ -58,7 +58,7 @@ export default function Chat() {
     if (!inputContent.trim()) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/messages?sender_id=${authUserId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/messages?sender_id=${authUserId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

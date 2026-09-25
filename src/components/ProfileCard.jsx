@@ -21,7 +21,7 @@ export default function ProfileCard({ userId, currentUserId, onClose }) {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${userId}/profile`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/${userId}/profile`);
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
@@ -38,7 +38,7 @@ export default function ProfileCard({ userId, currentUserId, onClose }) {
   const handleEndorse = async (categoryId) => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/users/${userId}/vote?voter_id=${currentUserId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/${userId}/vote?voter_id=${currentUserId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category: categoryId })

@@ -1,7 +1,7 @@
 import os
 import boto3
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks, status, UploadFile, File, Form
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks, status, UploadFile, File, Form, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ import models, schemas, auth
 from database import engine, get_db
 import datetime
 import asyncio
+import sqlite3
 from contextlib import asynccontextmanager
 
 load_dotenv()
@@ -145,6 +146,38 @@ async def websocket_endpoint(websocket: WebSocket, event_id: int):
 
 
 # --- API ENDPOINTS ---
+
+@app.get("/venues/autocomplete")
+def autocomplete_venues(query: str = Query("", alias="query"), market: str = "austin"):
+    if not query or len(query.strip()) < 2:
+        return []
+
+    fts_query = " ".join([f"{word}*" for word in query.strip().split()])
+    market_clean = market.lower().replace("_", " ")
+
+    conn = sqlite3.connect("mic_manager.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    try:
+        sql = """
+            SELECT name, address, city 
+            FROM venues_fts 
+            WHERE venues_fts MATCH ? 
+              AND city LIKE ?
+            LIMIT 6;
+        """
+        rows = cursor.execute(sql, (fts_query, f"%{market_clean}%")).fetchall()
+        
+        if not rows:
+            sql_fallback = "SELECT name, address, city FROM venues_fts WHERE venues_fts MATCH ? LIMIT 6;"
+            rows = cursor.execute(sql_fallback, (fts_query,)).fetchall()
+
+        return [dict(row) for row in rows]
+    except Exception:
+        return []
+    finally:
+        conn.close()
 
 @app.get("/events/today")
 def get_todays_events(market: str = "austin", db: Session = Depends(get_db)):
