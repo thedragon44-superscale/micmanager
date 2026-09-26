@@ -14,6 +14,11 @@ export default function SceneComments() {
   const [isLoading, setIsLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const commentsEndRef = useRef(null);
+
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [comments]);
 
   useEffect(() => {
     if (!postId) return;
@@ -123,7 +128,7 @@ export default function SceneComments() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#18191a] animate-fade-in max-w-md mx-auto w-full pb-20">
+    <div className="flex flex-col h-full bg-[#18191a] animate-fade-in max-w-md mx-auto w-full pb-32">
       
       <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 sticky top-[60px] z-20 shadow-sm">
         <button onClick={() => navigate('/scene')} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
@@ -176,7 +181,7 @@ export default function SceneComments() {
         </div>
 
         {/* COMMENTS THREAD */}
-        <div className="space-y-4 pl-2">
+        <div className="space-y-4 pl-2 relative">
           {comments.length === 0 ? (
             <div className="text-center py-6 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
               Be the first to comment.
@@ -210,6 +215,8 @@ export default function SceneComments() {
               </div>
             ))
           )}
+          {/* Scroll Anchor */}
+          <div ref={commentsEndRef} className="h-6 shrink-0" />
         </div>
       </div>
 

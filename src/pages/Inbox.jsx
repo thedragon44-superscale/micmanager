@@ -83,7 +83,7 @@ export default function Inbox() {
       return;
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/messages/${myComicProfile.id}/${activeThread.partner_id}`)
+    fetch(`${import.meta.env.VITE_API_URL}/messages/thread/${myComicProfile.id}/${activeThread.partner_id}`)
       .then(res => res.ok ? res.json() : [])
       .then(data => setMessages(data || []))
       .catch(err => console.error('Error fetching messages:', err));
@@ -147,7 +147,7 @@ export default function Inbox() {
     }));
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/messages`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/messages?sender_id=${myComicProfile.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(msgPayload)
@@ -309,7 +309,7 @@ export default function Inbox() {
                 );
               })
             )}
-            <div ref={chatEndRef} />
+            <div ref={chatEndRef} className="h-6 shrink-0" />
           </div>
 
           {/* Chat Input Bar */}

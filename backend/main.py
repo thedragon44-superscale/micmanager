@@ -104,6 +104,13 @@ async def lifespan(app: FastAPI):
                 UNIQUE(target_type, target_id, user_id)
             )
         """))
+        
+        try:
+            db.execute(text("ALTER TABLE feed_posts ADD COLUMN likes_count INTEGER DEFAULT 0"))
+            db.execute(text("ALTER TABLE feed_posts ADD COLUMN comments_count INTEGER DEFAULT 0"))
+        except Exception:
+            pass 
+            
         db.commit()
     finally:
         db.close()

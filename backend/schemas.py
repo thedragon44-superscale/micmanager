@@ -79,6 +79,7 @@ class BadgeVoteCreate(BaseModel):
 
 # --- Messaging Schemas ---
 class DirectMessageCreate(BaseModel):
+    sender_id: int
     recipient_id: int
     content: str
     message_type: str = "text"
