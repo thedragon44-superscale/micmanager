@@ -165,7 +165,10 @@ async def websocket_endpoint(websocket: WebSocket, event_id: int):
     await manager.connect(websocket, event_id)
     try:
         while True:
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            # Intercept frontend heartbeat to prevent Cloudflare from terminating idle sockets
+            if data == "PING":
+                await websocket.send_text("PONG")
     except WebSocketDisconnect:
         manager.disconnect(websocket, event_id)
 

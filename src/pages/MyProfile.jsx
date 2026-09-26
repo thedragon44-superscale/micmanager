@@ -25,17 +25,25 @@ export default function MyProfile() {
       return;
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/users/${myComicProfile.id}/profile`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data) setProfileData(data);
-      })
-      .catch(() => {});
+    const fetchVaultData = () => {
+      fetch(`${import.meta.env.VITE_API_URL}/users/${myComicProfile.id}/profile`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) setProfileData(data);
+        })
+        .catch(() => {});
 
-    fetch(`${import.meta.env.VITE_API_URL}/users/${myComicProfile.id}/history`)
-      .then(res => res.ok ? res.json() : [])
-      .then(data => setAudioHistory(data || []))
-      .catch(() => {});
+      fetch(`${import.meta.env.VITE_API_URL}/users/${myComicProfile.id}/history`)
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setAudioHistory(data || []))
+        .catch(() => {});
+    };
+
+    fetchVaultData();
+
+    // Silently refresh expired S3 presigned URLs when user returns to the tab
+    window.addEventListener('focus', fetchVaultData);
+    return () => window.removeEventListener('focus', fetchVaultData);
   }, [myComicProfile?.id, setMyComicProfile]);
 
   // Handle Login/Register FTS Failsafe
