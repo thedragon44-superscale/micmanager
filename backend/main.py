@@ -122,9 +122,12 @@ async def lifespan(app: FastAPI):
 # --- INITIALIZE APP ---
 app = FastAPI(title="Austin Mic Manager API", lifespan=lifespan)
 
+# Parse allowed origins from .env
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

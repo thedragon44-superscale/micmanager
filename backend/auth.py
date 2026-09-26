@@ -2,9 +2,13 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import jwt
 import bcrypt
+import os
+from dotenv import load_dotenv
 
-# Security Settings (In production, move SECRET_KEY to an environment variable)
-SECRET_KEY = "austin_comedy_scene_super_secret_key"
+load_dotenv()
+
+# Security Settings 
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback_dev_key_if_env_missing")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 

@@ -59,12 +59,13 @@ export default function Landing() {
               center={[30.2672, -97.7431]} 
               zoom={13} 
               scrollWheelZoom={false} 
-              className="h-full w-full !z-0"
+              /* Tailwind arbitrary variants apply the dark filter ONLY to the map tiles, leaving markers alone */
+              className="h-full w-full !z-0 [&_.leaflet-tile-pane]:filter [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-90 [&_.leaflet-tile-pane]:contrast-85"
             >
-              {/* Carto Dark Matter Tiles - Matches Facebook Dark UI perfectly */}
+              {/* Standard OpenStreetMap - 100% Free, No API Key */}
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; OpenStreetMap'
               />
               {todayMics.filter(m => m.lat && m.lng).map(mic => (
                 <Marker key={mic.id} position={[mic.lat, mic.lng]}>

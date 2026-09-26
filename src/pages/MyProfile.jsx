@@ -108,7 +108,7 @@ export default function MyProfile() {
   // --- UNAUTHENTICATED: DB LOGIN / REGISTER SCREEN ---
   if (!myComicProfile) {
     return (
-      <div className="p-4 flex flex-col gap-5 animate-fade-in max-w-md mx-auto w-full my-auto">
+      <div className="p-4 flex flex-col gap-5 overflow-y-auto pb-32 animate-fade-in max-w-md mx-auto w-full my-auto">
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-5 shadow-sm">
           
           <div className="w-12 h-12 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center text-[#2d88ff] text-lg mx-auto mb-3">
@@ -211,7 +211,7 @@ export default function MyProfile() {
 
   // --- AUTHENTICATED PROFILE VIEW ---
   return (
-    <div className="p-3 flex flex-col gap-3 animate-fade-in max-w-md mx-auto w-full pb-24">
+    <div className="p-3 flex flex-col gap-3 overflow-y-auto pb-32 animate-fade-in max-w-md mx-auto w-full">
       
       {/* COMIC IDENTITY HEADER CARD */}
       <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 flex flex-col items-center shadow-sm">
