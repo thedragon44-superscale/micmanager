@@ -205,15 +205,18 @@ def get_todays_events(market: str = "austin", db: Session = Depends(get_db)):
     events = db.query(models.MicEvent).join(models.MicSeries).filter(models.MicSeries.market == market).all()
     result = []
     for event in events:
-        series = db.query(models.MicSeries).filter(models.MicSeries.id == event.series_id).first()
-        result.append({
-            "id": event.id,
-            "series_id": event.series_id,
-            "name": series.name if series else "Unknown Mic",
-            "venue": series.venue if series else "",
-            "status": event.status,
-            "event_date": str(event.event_date)
-        })
+            series = db.query(models.MicSeries).filter(models.MicSeries.id == event.series_id).first()
+            result.append({
+                "id": event.id,
+                "series_id": event.series_id,
+                "name": series.name if series else "Unknown Mic",
+                "venue": series.venue if series else "",
+                "address": series.address if series else None,
+                "lat": series.lat if series else None,
+                "lng": series.lng if series else None,
+                "status": event.status,
+                "event_date": str(event.event_date)
+            })
     return result
 
 @app.get("/mics/active", response_model=list[schemas.MicEventResponse])

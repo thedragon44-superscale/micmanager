@@ -25,19 +25,19 @@ def seed():
 
         mic_configs = {
             "austin": [
-                ("Vulcan Gas Open Mic", "Vulcan Gas Company"),
-                ("Creek & Cave Open", "The Creek and the Cave"),
-                ("Red River Mic", "Elysium"),
+                ("Vulcan Gas Open Mic", "Vulcan Gas Company", "418 E 6th St, Austin, TX", 30.2672, -97.7388),
+                ("Creek & Cave Open", "The Creek and the Cave", "611 E 7th St, Austin, TX", 30.2680, -97.7360),
+                ("Red River Mic", "Elysium", "705 Red River St, Austin, TX", 30.2682, -97.7366),
             ],
             "dallas": [
-                ("Hyena's Open Stage", "Hyena's Comedy Nightclub"),
-                ("Deep Ellum Comedy Mic", "Dallas Comedy Club"),
-                ("Uptown Standup", "The Laugh Lounge"),
+                ("Hyena's Open Stage", "Hyena's Comedy Nightclub", "5321 E Mockingbird Ln, Dallas, TX", 32.8361, -96.7744),
+                ("Deep Ellum Comedy Mic", "Dallas Comedy Club", "3036 Elm St, Dallas, TX", 32.7845, -96.7797),
+                ("Uptown Standup", "The Laugh Lounge", "Uptown, Dallas, TX", 32.8000, -96.8000),
             ],
             "houston": [
-                ("Secret Group Open Mic", "The Secret Group"),
-                ("Montrose Comedy Night", "Rudyard's"),
-                ("H-Town Improv Mic", "Houston Improv"),
+                ("Secret Group Open Mic", "The Secret Group", "2101 Polk St, Houston, TX", 29.7483, -95.3571),
+                ("Montrose Comedy Night", "Rudyard's", "2010 Waugh Dr, Houston, TX", 29.7547, -95.3985),
+                ("H-Town Improv Mic", "Houston Improv", "7620 Katy Fwy, Houston, TX", 29.7844, -95.4789),
             ]
         }
 
@@ -67,10 +67,13 @@ def seed():
                 db.add(user)
 
             # 3. Create 3 Mics per market
-            for idx, (name, venue) in enumerate(mic_configs[m]):
+            for idx, (name, venue, address, lat, lng) in enumerate(mic_configs[m]):
                 series = models.MicSeries(
                     name=name,
                     venue=venue,
+                    address=address,
+                    lat=lat,
+                    lng=lng,
                     market=m,
                     host_pin="1234",
                     day_of_week=today.weekday(),

@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMic } from '../MicContext';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Re-link Leaflet marker images so Webpack/Vite doesn't break them
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -43,26 +54,29 @@ export default function Landing() {
       {/* DYNAMIC LOGISTICS RADAR MAP */}
       {!isLoading && todayMics.length > 0 && (
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm flex flex-col">
-          <div className="h-28 map-pattern relative w-full border-b border-[#3e4042] flex items-center justify-center">
-            {todayMics.slice(0, 2).map((mic, index) => {
-              const isFirst = index === 0;
-              const positionClass = isFirst ? "top-3 left-1/4" : "bottom-3 right-1/3";
-              const pinColor = mic.status === 'active' ? "text-emerald-500" : "text-[#b0b3b8]";
-              const badgeColor = mic.status === 'active' ? "bg-emerald-500 text-slate-950" : "bg-[#242526] text-white border border-[#3e4042]";
-              
-              const displayDistance = mic.distance_miles ? `${mic.distance_miles}m` : isFirst ? '0.2m' : '1.4m';
-
-              return (
-                <div key={mic.id} className={`absolute ${positionClass} flex flex-col items-center animate-fade-in`}>
-                  <div className={`${badgeColor} text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg mb-0.5 font-mono-data truncate max-w-[100px]`}>
-                    {formatVenueName(mic.venue)} ({displayDistance})
-                  </div>
-                  <i className={`fa-solid fa-location-pin ${pinColor} text-base drop-shadow-md`}></i>
-                </div>
-              );
-            })}
+          <div className="h-40 relative w-full border-b border-[#3e4042]">
+            <MapContainer 
+              center={[30.2672, -97.7431]} 
+              zoom={13} 
+              scrollWheelZoom={false} 
+              className="h-full w-full !z-0"
+            >
+              {/* Carto Dark Matter Tiles - Matches Facebook Dark UI perfectly */}
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              />
+              {todayMics.filter(m => m.lat && m.lng).map(mic => (
+                <Marker key={mic.id} position={[mic.lat, mic.lng]}>
+                  <Popup className="font-sans !bg-[#242526] !text-white !border-[#3e4042] !rounded-lg">
+                    <strong className="font-black font-display uppercase tracking-wider block border-b border-gray-600 pb-1 mb-1">{mic.venue}</strong>
+                    <span className="text-xs text-[#b0b3b8] block">{mic.address}</span>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
           </div>
-          <div className="p-2.5 flex justify-between items-center">
+          <div className="p-2.5 flex justify-between items-center bg-[#242526]">
             <div>
               <h3 className="text-xs font-bold text-white">Logistics Radar Map</h3>
               <p className="text-[10px] text-[#b0b3b8]">Live market routing</p>

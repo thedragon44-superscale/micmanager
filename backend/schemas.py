@@ -16,6 +16,9 @@ class MicEventResponse(BaseModel):
     series_id: int
     name: str  
     venue: str
+    address: str | None = None
+    lat: float | None = None
+    lng: float | None = None
     status: str
     event_date: date
 
