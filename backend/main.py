@@ -5,7 +5,8 @@ from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconn
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
+from pydantic import BaseModel
 import models, schemas, auth
 from database import engine, get_db
 import datetime
@@ -30,14 +31,13 @@ MINIO_AUDIO_BUCKET = os.getenv("MINIO_AUDIO_BUCKET")
 # --- GRACE PERIOD SWEEPER (Runs in background) ---
 async def check_missed_mics():
     while True:
-        await asyncio.sleep(60) # Run check every 60 seconds
+        await asyncio.sleep(60) 
         db = next(get_db())
         try:
             now = datetime.datetime.now()
             current_date = now.date()
             current_time = now.time()
             
-            # Find mics scheduled for today that haven't been activated
             pending_events = db.query(models.MicEvent).join(models.MicSeries).filter(
                 models.MicEvent.event_date == current_date,
                 models.MicEvent.status == "scheduled",
@@ -64,11 +64,9 @@ async def check_missed_mics():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-seed test mics if database is empty
     db = next(get_db())
     try:
         if db.query(models.MicSeries).count() == 0:
-            # Mic 1
             s1 = models.MicSeries(name="Sunset Comedy Mic", venue="Vulcan Gas Company", host_pin="1234", day_of_week=5, start_time=datetime.time(20, 0))
             db.add(s1)
             db.commit()
@@ -76,7 +74,6 @@ async def lifespan(app: FastAPI):
             e1 = models.MicEvent(series_id=s1.id, event_date=datetime.date.today(), status="scheduled")
             db.add(e1)
 
-            # Mic 2
             s2 = models.MicSeries(name="East Austin Open", venue="The Creek and the Cave", host_pin="5678", day_of_week=5, start_time=datetime.time(21, 0))
             db.add(s2)
             db.commit()
@@ -85,6 +82,29 @@ async def lifespan(app: FastAPI):
             db.add(e2)
 
             db.commit()
+            
+        # Dynamically create missing interaction tables for the Feed
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS feed_comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                post_id INTEGER NOT NULL,
+                author_id INTEGER NOT NULL,
+                author_name TEXT NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                likes_count INTEGER DEFAULT 0
+            )
+        """))
+        db.execute(text("""
+            CREATE TABLE IF NOT EXISTS feed_likes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target_type TEXT NOT NULL,
+                target_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                UNIQUE(target_type, target_id, user_id)
+            )
+        """))
+        db.commit()
     finally:
         db.close()
 
@@ -97,12 +117,7 @@ app = FastAPI(title="Austin Mic Manager API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://streetcode101.com",
-        "*"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -143,7 +158,6 @@ async def websocket_endpoint(websocket: WebSocket, event_id: int):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, event_id)
-
 
 # --- API ENDPOINTS ---
 
@@ -228,7 +242,6 @@ def create_series(series: schemas.MicSeriesCreate, db: Session = Depends(get_db)
     )
     db.add(db_series)
     
-    # Auto-post to the Social Feed
     feed_post = models.FeedPost(
         content=f"A new mic '{series.name}' was just added to the rotation at {series.venue}!",
         post_type="mic_listed",
@@ -297,7 +310,6 @@ async def upload_avatar(user_id: int, file: UploadFile = File(...), db: Session 
         
         avatar_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_name}"
         
-        # Save to database
         user.avatar_url = avatar_url
         db.commit()
         
@@ -323,7 +335,6 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # 1. Calculate Attendance Percentage
     comics = db.query(models.Comic).filter(models.Comic.user_id == user_id).all()
     comic_ids = [c.id for c in comics]
     
@@ -333,11 +344,10 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db)):
         models.QueueEntry.status.in_(["completed", "excused"])
     ).count()
     
-    attendance_pct = 100 # Default to 100% for new accounts with no history
+    attendance_pct = 100 
     if total_signups > 0:
         attendance_pct = int((good_standings / total_signups) * 100)
         
-    # 2. Calculate Unlocked Badges (>= 10 points)
     votes = db.query(
         models.BadgeVote.category, 
         func.sum(models.BadgeVote.points).label("total_points")
@@ -365,7 +375,6 @@ def vote_for_badge(target_id: int, voter_id: int, vote: schemas.BadgeVoteCreate,
     if not voter:
         raise HTTPException(status_code=404, detail="Voter not found")
         
-    # Prevent duplicate voting for the same category
     existing_vote = db.query(models.BadgeVote).filter(
         models.BadgeVote.voter_id == voter_id,
         models.BadgeVote.target_id == target_id,
@@ -375,7 +384,6 @@ def vote_for_badge(target_id: int, voter_id: int, vote: schemas.BadgeVoteCreate,
     if existing_vote:
         raise HTTPException(status_code=400, detail="You have already endorsed this comic for this badge.")
         
-    # Apply the weighted host multiplier
     points = 3.34 if voter.is_host else 1.0
     
     new_vote = models.BadgeVote(
@@ -388,7 +396,6 @@ def vote_for_badge(target_id: int, voter_id: int, vote: schemas.BadgeVoteCreate,
     db.commit()
     
     return {"message": f"Endorsement recorded! Added {points} points."}
-
 
 # --- QUEUE & STAGE CONTROLS ---
 
@@ -406,7 +413,6 @@ def activate_event(event_id: int, pin: str, background_tasks: BackgroundTasks, d
     event.started_at = datetime.datetime.now(datetime.timezone.utc)
     series.consecutive_misses = 0 
     
-    # Auto-post to the Social Feed
     feed_post = models.FeedPost(
         content=f"The host just clocked in for '{series.name}' at {series.venue}. The mic is officially LIVE!",
         post_type="mic_started",
@@ -422,7 +428,6 @@ def activate_event(event_id: int, pin: str, background_tasks: BackgroundTasks, d
 
 @app.post("/events/{event_id}/register", response_model=schemas.QueueEntryResponse)
 def register_comic(event_id: int, comic: schemas.ComicRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # Auto-link user_id if the comic name matches a registered username
     matched_user = db.query(models.User).filter(models.User.username == comic.name).first()
     linked_user_id = matched_user.id if matched_user else None
 
@@ -527,7 +532,6 @@ def end_event(event_id: int, background_tasks: BackgroundTasks, db: Session = De
     db.query(models.EventMessage).filter(models.EventMessage.event_id == event_id).delete()
     
     market_val = series.market if 'series' in locals() and series else "austin"
-    # Auto-post to the Social Feed
     feed_post = models.FeedPost(
         content=f"{series_name} has officially ended for the night. Great sets everyone!",
         post_type="mic_ended",
@@ -666,7 +670,6 @@ async def upload_audio_set(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Generate a unique, organized file path in the bucket
     timestamp = int(datetime.datetime.now().timestamp())
     file_key = f"sets/{user_id}/{timestamp}_{file.filename}"
     
@@ -678,7 +681,6 @@ async def upload_audio_set(
             ExtraArgs={"ContentType": file.content_type}
         )
         
-        # Save the secure object key to the database, not a public URL
         set_title = title
         if not set_title and event_id:
             event = db.query(models.MicEvent).filter(models.MicEvent.id == event_id).first()
@@ -701,7 +703,6 @@ async def upload_audio_set(
         db.commit()
         db.refresh(audio_set)
         
-        # Generate a temporary presigned URL so the frontend can immediately play it
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': MINIO_AUDIO_BUCKET, 'Key': file_key},
@@ -723,7 +724,6 @@ def get_user_audio_sets(user_id: int, db: Session = Depends(get_db)):
     
     result = []
     for s in sets:
-        # Generate fresh 1-hour presigned URLs for every set on page load
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': MINIO_AUDIO_BUCKET, 'Key': s.file_url},
@@ -742,7 +742,6 @@ def get_user_history(user_id: int, db: Session = Depends(get_db)):
     if not user:
         return []
 
-    # Find or link comic entries matching user_id or username
     comics = db.query(models.Comic).filter(
         (models.Comic.user_id == user_id) | (models.Comic.name == user.username)
     ).all()
@@ -773,14 +772,12 @@ def get_user_history(user_id: int, db: Session = Depends(get_db)):
         event = db.query(models.MicEvent).filter(models.MicEvent.id == e.event_id).first()
         series = db.query(models.MicSeries).filter(models.MicSeries.id == event.series_id).first() if event else None
 
-        # Try matching audio by exact event_id
         audio = db.query(models.AudioSet).filter(
             models.AudioSet.user_id == user_id,
             models.AudioSet.event_id == e.event_id
         ).order_by(models.AudioSet.created_at.desc()).first()
 
         if not audio:
-            # Fallback: grab unlinked audio set for this user
             audio = db.query(models.AudioSet).filter(
                 models.AudioSet.user_id == user_id,
                 models.AudioSet.event_id.is_(None),
@@ -813,7 +810,6 @@ def get_user_history(user_id: int, db: Session = Depends(get_db)):
             "duration_seconds": duration
         })
 
-    # Include standalone audio sets recorded directly in the vault
     standalone_audios = db.query(models.AudioSet).filter(
         models.AudioSet.user_id == user_id,
         models.AudioSet.id.notin_(matched_audio_ids)
@@ -861,16 +857,112 @@ def get_user_history(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/directory", response_model=list[schemas.DirectoryUserResponse])
 def get_scene_directory(market: str = "austin", db: Session = Depends(get_db)):
-    # Fetch all users in the specific market, ordered alphabetically
     users = db.query(models.User).filter(models.User.home_market == market).order_by(models.User.username.asc()).all()
     return users
 
-# --- SOCIAL FEED ---
+# --- SOCIAL FEED INTERACTIONS ---
+
+class FeedInteractionPayload(BaseModel):
+    user_id: int
+
+class FeedCommentPayload(BaseModel):
+    post_id: int
+    author_id: int
+    author_name: str
+    content: str
+    timestamp: str
 
 @app.get("/feed", response_model=list[schemas.FeedPostResponse])
 def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_db)):
-    # Fetch the latest posts for the market
     return db.query(models.FeedPost).filter(models.FeedPost.market == market).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
+
+@app.get("/feed/{post_id}")
+def get_feed_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(models.FeedPost).filter(models.FeedPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+@app.post("/feed/{post_id}/like")
+def toggle_post_like(post_id: int, payload: FeedInteractionPayload, db: Session = Depends(get_db)):
+    # Toggle like using raw SQL to bypass models schema requirements
+    existing = db.execute(text("SELECT id FROM feed_likes WHERE target_type='post' AND target_id=:post_id AND user_id=:user_id"), 
+                          {"post_id": post_id, "user_id": payload.user_id}).fetchone()
+    
+    if existing:
+        db.execute(text("DELETE FROM feed_likes WHERE id=:id"), {"id": existing[0]})
+        db.execute(text("UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id=:post_id"), {"post_id": post_id})
+    else:
+        db.execute(text("INSERT INTO feed_likes (target_type, target_id, user_id) VALUES ('post', :post_id, :user_id)"), 
+                   {"post_id": post_id, "user_id": payload.user_id})
+        db.execute(text("UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id=:post_id"), {"post_id": post_id})
+        
+    db.commit()
+    return {"status": "success"}
+
+@app.post("/comments/{comment_id}/like")
+def toggle_comment_like(comment_id: int, payload: FeedInteractionPayload, db: Session = Depends(get_db)):
+    existing = db.execute(text("SELECT id FROM feed_likes WHERE target_type='comment' AND target_id=:comment_id AND user_id=:user_id"), 
+                          {"comment_id": comment_id, "user_id": payload.user_id}).fetchone()
+    
+    if existing:
+        db.execute(text("DELETE FROM feed_likes WHERE id=:id"), {"id": existing[0]})
+        db.execute(text("UPDATE feed_comments SET likes_count = MAX(0, likes_count - 1) WHERE id=:comment_id"), {"comment_id": comment_id})
+    else:
+        db.execute(text("INSERT INTO feed_likes (target_type, target_id, user_id) VALUES ('comment', :comment_id, :user_id)"), 
+                   {"comment_id": comment_id, "user_id": payload.user_id})
+        db.execute(text("UPDATE feed_comments SET likes_count = likes_count + 1 WHERE id=:comment_id"), {"comment_id": comment_id})
+        
+    db.commit()
+    return {"status": "success"}
+
+@app.get("/feed/{post_id}/comments")
+def get_post_comments(post_id: int, db: Session = Depends(get_db)):
+    rows = db.execute(text("SELECT * FROM feed_comments WHERE post_id=:post_id ORDER BY id ASC"), {"post_id": post_id}).fetchall()
+    comments = []
+    for row in rows:
+        comments.append({
+            "id": row[0],
+            "post_id": row[1],
+            "author_id": row[2],
+            "author_name": row[3],
+            "content": row[4],
+            "timestamp": row[5],
+            "likes_count": row[6],
+            "user_liked": False
+        })
+    return comments
+
+@app.post("/feed/{post_id}/comments")
+def add_post_comment(post_id: int, payload: FeedCommentPayload, db: Session = Depends(get_db)):
+    db.execute(text("""
+        INSERT INTO feed_comments (post_id, author_id, author_name, content, timestamp) 
+        VALUES (:post_id, :author_id, :author_name, :content, :timestamp)
+    """), {
+        "post_id": post_id,
+        "author_id": payload.author_id,
+        "author_name": payload.author_name,
+        "content": payload.content,
+        "timestamp": payload.timestamp
+    })
+    
+    db.execute(text("UPDATE feed_posts SET comments_count = comments_count + 1 WHERE id=:post_id"), {"post_id": post_id})
+    db.commit()
+    
+    # Return the inserted record ID
+    new_id = db.execute(text("SELECT last_insert_rowid()")).scalar()
+    
+    return {
+        "id": new_id,
+        "post_id": post_id,
+        "author_id": payload.author_id,
+        "author_name": payload.author_name,
+        "content": payload.content,
+        "timestamp": payload.timestamp,
+        "likes_count": 0,
+        "user_liked": False
+    }
+
 
 @app.post("/users/{user_id}/feed", response_model=schemas.FeedPostResponse)
 def create_user_post(user_id: int, post: schemas.FeedPostCreate, db: Session = Depends(get_db)):
@@ -894,7 +986,6 @@ def create_user_post(user_id: int, post: schemas.FeedPostCreate, db: Session = D
 
 @app.get("/users/{user_id}/inbox")
 def get_user_inbox(user_id: int, db: Session = Depends(get_db)):
-    # Find all distinct users this user has messaged or received messages from
     sent_to = db.query(models.DirectMessage.recipient_id).filter(models.DirectMessage.sender_id == user_id)
     received_from = db.query(models.DirectMessage.sender_id).filter(models.DirectMessage.recipient_id == user_id)
     
@@ -920,15 +1011,16 @@ def get_chat_thread(user1_id: int, user2_id: int, db: Session = Depends(get_db))
     return messages
 
 @app.post("/messages", response_model=schemas.DirectMessageResponse)
-def send_direct_message(sender_id: int, msg: schemas.DirectMessageCreate, db: Session = Depends(get_db)):
-    sender = db.query(models.User).filter(models.User.id == sender_id).first()
+def send_direct_message(msg: schemas.DirectMessageCreate, db: Session = Depends(get_db)):
+    # Standardized to read sender_id directly from payload
+    sender = db.query(models.User).filter(models.User.id == msg.sender_id).first()
     recipient = db.query(models.User).filter(models.User.id == msg.recipient_id).first()
     
     if not sender or not recipient:
         raise HTTPException(status_code=404, detail="Sender or recipient not found")
         
     db_msg = models.DirectMessage(
-        sender_id=sender_id,
+        sender_id=msg.sender_id,
         recipient_id=msg.recipient_id,
         content=msg.content,
         message_type=msg.message_type,

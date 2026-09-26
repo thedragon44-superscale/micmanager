@@ -18,17 +18,15 @@ export default function Chat() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate('/profile');
       return;
     }
 
-    // 1. Fetch recipient profile info
     fetch(`${import.meta.env.VITE_API_URL}/users/${recipientId}/profile`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setRecipient(data))
       .catch(err => console.error(err));
 
-    // 2. Fetch initial chat thread & poll every 3s
     fetchThread();
     const interval = setInterval(fetchThread, 3000);
     return () => clearInterval(interval);
@@ -57,63 +55,68 @@ export default function Chat() {
     e.preventDefault();
     if (!inputContent.trim()) return;
 
+    // Strict payload mapping to align with how Inbox.jsx operates
+    const msgPayload = {
+      id: Date.now().toString(),
+      sender_id: authUserId,
+      sender_name: user.username || user.name || 'User',
+      recipient_id: parseInt(recipientId),
+      content: inputContent.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/messages?sender_id=${authUserId}`, {
+      // Adjusted to use the global /messages POST endpoint rather than the query string variant
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipient_id: parseInt(recipientId),
-          content: inputContent,
-          message_type: 'text'
-        })
+        body: JSON.stringify(msgPayload)
       });
 
       if (res.ok) {
         setInputContent('');
         fetchThread();
       } else {
-        toast.error("Failed to send message.");
+        toast.error("Message failed to save to database.");
       }
     } catch (err) {
-      toast.error("Network error.");
+      toast.error("Network error sending message.");
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-65px)] bg-slate-950 font-sans">
-      
-      {/* CHAT HEADER */}
-      <header className="bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between shrink-0">
+    <div className="flex flex-col h-full bg-[#18191a] font-sans animate-fade-in max-w-md mx-auto w-full pb-16">
+      <header className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center justify-between shrink-0 shadow-sm sticky top-[60px] z-30">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white transition-colors mr-1">
-            <i className="fa-solid fa-arrow-left text-base"></i>
+          <button onClick={() => navigate(-1)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
+            <i className="fa-solid fa-arrow-left"></i>
           </button>
-
           {recipient?.avatar_url ? (
-            <img src={recipient.avatar_url} alt={recipient.username} className="w-8 h-8 rounded-full border border-slate-700 object-cover" />
+            <img src={recipient.avatar_url} alt={recipient.username} className="w-8 h-8 rounded-full border border-[#3e4042] object-cover shrink-0" />
           ) : (
-            <div className="w-8 h-8 bg-indigo-900/50 border border-indigo-500/30 rounded-full flex items-center justify-center text-indigo-300 font-bold text-xs">
+            <div className="w-8 h-8 bg-[#18191a] border border-[#3e4042] rounded-full flex items-center justify-center text-[#2d88ff] font-bold text-xs shrink-0">
               {recipient?.username?.substring(0, 2).toUpperCase() || '?'}
             </div>
           )}
-
           <div>
-            <h2 className="font-bold text-sm text-slate-100">@{recipient?.username || 'Comic'}</h2>
-            <span className="text-[9px] text-emerald-400 font-mono uppercase tracking-widest block">
+            <h2 className="font-bold text-xs text-white uppercase font-mono-data tracking-wider">
+              @{recipient?.username || 'Comic'}
+            </h2>
+            <span className="text-[9px] text-[#2d88ff] font-mono-data uppercase tracking-widest block mt-0.5">
               <i className="fa-solid fa-shield-halved mr-1"></i> Direct Channel
             </span>
           </div>
         </div>
       </header>
 
-      {/* THREAD BODY */}
-      <main className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-950/50">
+      <main className="flex-1 p-3 overflow-y-auto space-y-3 bg-[#18191a]">
         {loading ? (
-          <div className="text-center text-slate-500 py-12 font-mono text-xs uppercase animate-pulse">
+          <div className="text-center text-[#b0b3b8] py-12 font-mono-data text-[10px] uppercase tracking-widest">
+            <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
             Loading history...
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-slate-500 py-12 font-mono text-xs uppercase">
+          <div className="text-center text-[#b0b3b8] py-12 font-mono-data text-[10px] uppercase tracking-widest">
             No history with @{recipient?.username}. Say what's up!
           </div>
         ) : (
@@ -121,11 +124,11 @@ export default function Chat() {
             const isMe = msg.sender_id === authUserId;
             return (
               <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-xs font-medium leading-relaxed ${isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-900 text-slate-200 border border-slate-800 rounded-bl-none'}`}>
+                <div className={`max-w-[80%] px-3.5 py-2.5 rounded-xl text-xs font-medium leading-relaxed ${isMe ? 'bg-[#2d88ff] text-white rounded-br-sm shadow-sm' : 'bg-[#242526] text-white border border-[#3e4042] rounded-bl-sm'}`}>
                   {msg.content}
                 </div>
-                <span className="text-[8px] font-mono text-slate-600 mt-1 px-1">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span className="text-[8px] font-mono-data text-[#b0b3b8] mt-1 px-1">
+                  {msg.timestamp || new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             );
@@ -134,20 +137,19 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* INPUT FOOTER */}
-      <footer className="p-3 bg-slate-900 border-t border-slate-800 shrink-0">
-        <form onSubmit={sendMessage} className="flex gap-2 max-w-2xl mx-auto">
+      <footer className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 fixed bottom-[64px] left-0 w-full z-20">
+        <form onSubmit={sendMessage} className="flex gap-2 max-w-md mx-auto items-center">
           <input
             type="text"
             value={inputContent}
             onChange={(e) => setInputContent(e.target.value)}
             placeholder="Write a message..."
-            className="flex-1 bg-slate-950 border border-slate-800 text-slate-200 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="flex-1 bg-[#18191a] border border-[#3e4042] text-white text-xs rounded-full px-3.5 py-2 focus:outline-none focus:border-[#2d88ff] transition-colors font-sans"
           />
           <button
             type="submit"
             disabled={!inputContent.trim()}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white px-5 py-3 rounded-xl text-xs font-bold uppercase transition-all shadow-md"
+            className="text-[#2d88ff] hover:text-[#1b74e4] disabled:opacity-40 font-bold px-2 py-1 transition-colors flex items-center justify-center text-sm"
           >
             <i className="fa-solid fa-paper-plane"></i>
           </button>

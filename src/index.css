@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Oswald:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Oswald:wght@600;700&display=swap');
 @import "tailwindcss";
 
 @layer base {
@@ -7,14 +7,14 @@
   }
 
   body {
-    background-color: #020617; /* slate-950 */
-    color: #f8fafc;            /* slate-50 */
+    background-color: #18191a; /* Facebook Dark Theme Bg */
+    color: #e4e6eb;            /* Facebook Primary Text */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Brutalist Header Utility */
+  /* Display Typography */
   h1, h2, h3, .font-display {
     font-family: 'Oswald', 'Inter', sans-serif;
     letter-spacing: -0.02em;
@@ -26,43 +26,37 @@
   }
 }
 
-/* Custom Sleek Scrollbars for Dark Mode */
+/* Custom Minimal Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #18191a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #3e4042;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #4e5052;
 }
 
-/* Neon Stage & Glow Effects */
-.glow-blue {
-  box-shadow: 0 0 20px -3px rgba(59, 130, 246, 0.4);
+/* Logistics Map Pattern Background */
+.map-pattern {
+  background-image: radial-gradient(#3e4042 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-color: #18191a;
 }
 
-.glow-amber {
-  box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.4);
-}
-
-.glow-red {
-  box-shadow: 0 0 25px -2px rgba(239, 68, 68, 0.5);
-}
-
-/* Smooth Fade Animations */
+/* Fade In Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(2px);
   }
   to {
     opacity: 1;
@@ -71,5 +65,5 @@
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

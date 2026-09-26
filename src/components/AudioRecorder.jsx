@@ -127,41 +127,41 @@ export default function AudioRecorder({ onRecordingComplete }) {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-between gap-3 shadow-lg">
-      <div className="flex items-center justify-between w-full">
+    <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 flex flex-col items-center justify-between gap-3 shadow-sm">
+      <div className="flex items-center justify-between w-full border-b border-[#3e4042] pb-3">
         <div className="flex items-center gap-2">
-          <span className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-slate-700'}`}></span>
-          <span className="text-xs font-black uppercase tracking-widest text-slate-300">
+          <span className={`w-2.5 h-2.5 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-[#3e4042]'}`}></span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white font-mono-data">
             {isRecording ? 'Live Recording Set...' : 'Stage Audio Guard'}
           </span>
         </div>
-        <span className="text-xs font-mono font-bold text-slate-400">
+        <span className="text-xs font-mono-data font-bold text-[#b0b3b8]">
           {formatSeconds(recordingTime)}
         </span>
       </div>
 
-      <div className="flex gap-2 w-full">
+      <div className="flex gap-2 w-full pt-1">
         {!isRecording ? (
           <button 
             onClick={startRecording}
             disabled={isUploading}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+            className="flex-1 bg-[#18191a] hover:bg-gray-800 border border-[#3e4042] text-white font-bold py-2.5 rounded-lg text-[10px] uppercase tracking-widest font-mono-data transition-colors flex items-center justify-center gap-2"
           >
-            <i className="fa-solid fa-circle text-red-400"></i> Manual Record
+            <i className="fa-solid fa-circle text-red-500 text-[8px]"></i> Manual Record
           </button>
         ) : (
           <button 
             onClick={stopAndAutoSave}
             disabled={isUploading}
-            className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-950"
+            className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-lg text-[10px] uppercase tracking-widest font-mono-data transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
-            <i className="fa-solid fa-square"></i> Stop & Save Set
+            <i className="fa-solid fa-square text-[10px]"></i> Stop & Save Set
           </button>
         )}
       </div>
 
       {isUploading && (
-        <span className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest animate-pulse">
+        <span className="text-[9px] font-mono-data text-[#2d88ff] uppercase tracking-widest animate-pulse mt-1">
           Uploading audio to MinIO Vault...
         </span>
       )}

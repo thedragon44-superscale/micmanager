@@ -5,7 +5,6 @@ export default function SetHistoryLedger() {
   const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentlyPlayingId, setCurrentlyPlayingId] = useState(null);
 
   const authUserId = user?.user_id || user?.id;
 
@@ -38,7 +37,8 @@ export default function SetHistoryLedger() {
 
   if (loading) {
     return (
-      <div className="text-center text-slate-500 py-8 font-mono text-xs uppercase animate-pulse">
+      <div className="text-center text-[#b0b3b8] py-8 font-mono-data text-[10px] uppercase tracking-widest">
+        <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
         Loading stage ledger...
       </div>
     );
@@ -46,56 +46,56 @@ export default function SetHistoryLedger() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">
+      <div className="flex justify-between items-center mb-2 px-1">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-[#b0b3b8] font-mono-data">
           Stage History & Vault Ledger
         </h3>
-        <span className="text-[10px] font-mono text-slate-500">{history.length} Total Sets</span>
+        <span className="text-[10px] font-mono-data text-[#b0b3b8]">{history.length} Total Sets</span>
       </div>
 
       {history.length === 0 ? (
-        <div className="text-center text-slate-500 py-10 font-mono text-xs uppercase border border-slate-800 rounded-2xl bg-slate-900/30">
+        <div className="text-center text-[#b0b3b8] py-10 font-mono-data text-[10px] uppercase tracking-widest border border-[#3e4042] rounded-xl bg-[#18191a]">
           No recorded stage history yet.
         </div>
       ) : (
         history.map((item) => (
           <div 
             key={item.id} 
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:border-slate-700 transition-colors"
+            className="bg-[#242526] border border-[#3e4042] rounded-xl p-3.5 flex flex-col gap-3 shadow-sm hover:bg-gray-800 transition-colors"
           >
             <div className="flex justify-between items-start">
               <div>
-                <h4 className="font-bold text-sm text-slate-100">{item.mic_name}</h4>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  <i className="fa-solid fa-location-dot mr-1 text-slate-500"></i>
+                <h4 className="font-bold text-sm text-white">{item.mic_name}</h4>
+                <p className="text-[11px] text-[#b0b3b8] mt-0.5 truncate">
+                  <i className="fa-solid fa-location-dot mr-1 text-[#2d88ff]"></i>
                   {item.venue}
                 </p>
               </div>
-              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 uppercase">
+              <span className="text-[9px] font-mono-data font-bold text-[#b0b3b8] bg-[#18191a] px-2 py-1 rounded border border-[#3e4042] uppercase shrink-0">
                 {new Date(item.event_date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             </div>
 
             {/* AUDIO VAULT PLAYER BAR */}
             {item.audio_url ? (
-              <div className="mt-1 p-2.5 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center gap-3">
-                <i className="fa-solid fa-file-audio text-indigo-400 text-lg"></i>
+              <div className="mt-1 p-2.5 bg-[#18191a] border border-[#3e4042] rounded-lg flex items-center gap-3">
+                <i className="fa-solid fa-file-audio text-[#2d88ff] text-lg shrink-0"></i>
                 <div className="flex-1 min-w-0">
-                  <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                  <span className="block text-[9px] font-bold uppercase tracking-widest text-[#2d88ff] font-mono-data mb-1">
                     Vault Recording Attached
                   </span>
                   <audio 
                     controls 
                     src={item.audio_url} 
-                    className="w-full h-7 mt-1 rounded focus:outline-none"
+                    className="w-full h-7 rounded outline-none"
                   />
                 </div>
-                <span className="text-[10px] font-mono text-slate-500">
+                <span className="text-[10px] font-mono-data text-[#b0b3b8] shrink-0">
                   {formatDuration(item.duration_seconds)}
                 </span>
               </div>
             ) : (
-              <div className="text-[10px] font-mono text-slate-600 uppercase tracking-wider text-right">
+              <div className="text-[9px] font-mono-data text-[#b0b3b8] uppercase tracking-widest text-right mt-1">
                 No Audio Recorded
               </div>
             )}

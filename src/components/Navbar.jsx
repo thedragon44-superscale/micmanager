@@ -18,68 +18,101 @@ export default function Navbar({ isOpen, closeNav }) {
 
   return (
     <>
+      {/* BACKGROUND OVERLAY */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity" onClick={closeNav} />
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-opacity" 
+          onClick={closeNav} 
+        />
       )}
 
-      <div className={`fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
+      {/* SLIDING SIDEBAR */}
+      <div className={`fixed top-0 left-0 h-full w-64 bg-[#242526] border-r border-[#3e4042] z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col shadow-2xl`}>
         
-        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-          <h2 className="text-xl font-black tracking-tight text-slate-100">MENU</h2>
-          <button onClick={closeNav} className="text-slate-400 hover:text-slate-100">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        {/* HEADER */}
+        <div className="p-5 border-b border-[#3e4042] flex justify-between items-center shrink-0">
+          <h2 className="text-lg font-black tracking-wide text-white font-display uppercase">Menu</h2>
+          <button onClick={closeNav} className="text-[#b0b3b8] hover:text-white transition-colors p-1">
+            <i className="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
 
+        {/* SCROLLABLE NAV BODY */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          
           {/* MARKET / CITY SELECTOR */}
-          <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl mb-3">
-            <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1.5">
-              <i className="fa-solid fa-location-dot text-indigo-400"></i> Active Scene
+          <div className="p-3 bg-[#18191a] border border-[#3e4042] rounded-xl mb-4">
+            <label className="block text-[10px] font-bold uppercase tracking-widest text-[#b0b3b8] mb-2 flex items-center gap-1.5 font-mono-data">
+              <i className="fa-solid fa-location-dot text-[#2d88ff]"></i> Active Scene
             </label>
             <select 
               value={market} 
-              onChange={(e) => setMarket(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs font-bold rounded-lg p-2.5 focus:outline-none focus:border-indigo-500 cursor-pointer transition-colors"
+              onChange={(e) => {
+                setMarket(e.target.value);
+                closeNav();
+              }}
+              className="w-full bg-[#242526] border border-[#3e4042] text-white text-xs font-bold rounded-lg p-2.5 focus:outline-none focus:border-[#2d88ff] cursor-pointer transition-colors uppercase font-mono-data"
             >
               <option value="austin">Austin, TX</option>
               <option value="dallas">Dallas, TX</option>
+              <option value="fort_worth">Fort Worth, TX</option>
               <option value="houston">Houston, TX</option>
               <option value="san_antonio">San Antonio, TX</option>
-              <option value="miami">Miami, FL</option>
-              <option value="nyc">New York, NY</option>
-              <option value="la">Los Angeles, CA</option>
             </select>
           </div>
 
-          <Link to="/" onClick={closeNav} className="block px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">Home</Link>
-          <Link to="/host" onClick={closeNav} className="block px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">Host Dashboard</Link>
-          <Link to="/list-mic" onClick={closeNav} className="block px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">List a New Mic</Link>
-          <Link to="/scene" onClick={closeNav} className="block px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium">The Scene</Link>
+          <Link to="/" onClick={closeNav} className="block px-4 py-3 text-[#e4e6eb] hover:bg-gray-800 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
+            Home
+          </Link>
+          <Link to="/host" onClick={closeNav} className="block px-4 py-3 text-[#e4e6eb] hover:bg-gray-800 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
+            Host Dashboard
+          </Link>
+          <Link to="/list-mic" onClick={closeNav} className="block px-4 py-3 text-[#e4e6eb] hover:bg-gray-800 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
+            List a New Mic
+          </Link>
+          <Link to="/scene" onClick={closeNav} className="block px-4 py-3 text-[#e4e6eb] hover:bg-gray-800 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
+            The Scene
+          </Link>
+          
+          {/* AUTHENTICATED ROUTES */}
           {user && (
-            <>
-              <Link to="/inbox" onClick={closeNav} className="block px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-slate-100 rounded-lg transition-colors font-medium flex justify-between items-center">
+            <div className="pt-2 mt-2 border-t border-[#3e4042] space-y-2">
+              <Link to="/inbox" onClick={closeNav} className="flex justify-between items-center px-4 py-3 text-[#e4e6eb] hover:bg-gray-800 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
                 Inbox
-                <i className="fa-solid fa-envelope text-indigo-400"></i>
+                <i className="fa-solid fa-envelope text-[#2d88ff]"></i>
               </Link>
-              <Link to="/profile" onClick={closeNav} className="block px-4 py-3 text-indigo-300 hover:bg-indigo-900/30 hover:text-indigo-200 rounded-lg transition-colors font-bold flex justify-between items-center border border-transparent hover:border-indigo-500/30">
+              <Link to="/profile" onClick={closeNav} className="flex justify-between items-center px-4 py-3 text-[#2d88ff] bg-[#2d88ff]/10 border border-[#2d88ff]/30 hover:bg-[#2d88ff]/20 rounded-lg transition-colors font-mono-data text-xs uppercase font-bold tracking-widest">
                 My Profile
                 <i className="fa-solid fa-id-badge text-lg"></i>
               </Link>
-            </>
+            </div>
           )}
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
+        {/* BOTTOM FOOTER SECTION */}
+        <div className="p-4 border-t border-[#3e4042] shrink-0 bg-[#242526]">
           {user ? (
             <div className="space-y-3">
-              <div className="px-4 py-2 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center text-center">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Logged in as <br/><span className="text-indigo-400 text-sm">{user.username}</span></span>
+              <div className="px-4 py-2.5 bg-[#18191a] rounded-lg border border-[#3e4042] flex items-center justify-center text-center">
+                <span className="text-[10px] font-bold text-[#b0b3b8] uppercase tracking-wider font-mono-data">
+                  Logged in as <br/>
+                  <span className="text-[#2d88ff] text-xs mt-0.5 block">{user.username}</span>
+                </span>
               </div>
-              <button onClick={handleLogout} className="w-full py-3 bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 font-bold rounded-lg transition-colors text-sm tracking-wide">LOG OUT</button>
+              <button 
+                onClick={handleLogout} 
+                className="w-full py-3 bg-[#18191a] hover:bg-red-950/40 text-[#b0b3b8] hover:text-red-400 font-bold rounded-lg transition-colors text-[10px] font-mono-data uppercase tracking-widest border border-[#3e4042] hover:border-red-900/50"
+              >
+                Log Out
+              </button>
             </div>
           ) : (
-            <button onClick={() => { setIsAuthOpen(true); closeNav(); }} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors text-sm tracking-wide">LOG IN / REGISTER</button>
+            <button 
+              onClick={() => { setIsAuthOpen(true); closeNav(); }} 
+              className="w-full py-3 bg-[#2d88ff] hover:bg-[#1b74e4] text-white font-bold rounded-lg transition-colors text-[10px] font-mono-data uppercase tracking-widest shadow-sm"
+            >
+              Log In / Register
+            </button>
           )}
         </div>
       </div>

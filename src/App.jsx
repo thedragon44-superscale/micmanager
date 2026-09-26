@@ -14,6 +14,7 @@ import Signup from './pages/Signup';
 import ListMic from './pages/ListMic';
 import Chat from './pages/Chat';
 import LiveStage from './pages/LiveStage';
+import SceneComments from './pages/SceneComments'; // Added to support your new Scene routing
 
 // Import Global Components
 import Header from './components/Header';
@@ -25,8 +26,8 @@ export default function App() {
     <Router>
       <AuthProvider>
         <MicProvider>
-          {/* Main App Container */}
-          <div className="min-h-screen bg-slate-950 text-slate-200 flex flex-col pb-20 font-sans selection:bg-blue-500/30">
+          {/* Main App Container - Facebook Dark Theme Base */}
+          <div className="min-h-screen bg-[#18191a] text-[#e4e6eb] flex flex-col font-sans selection:bg-[#2d88ff]/30">
             
             {/* Global Persistent Header (Market, Live Stage Icon, Ticket Number) */}
             <Header />
@@ -50,6 +51,9 @@ export default function App() {
                 <Route path="/list-mic" element={<ListMic />} />
                 <Route path="/chat" element={<Chat />} />
                 <Route path="/stage" element={<LiveStage />} />
+                
+                {/* Scene Comments Thread Route */}
+                <Route path="/comments/:postId" element={<SceneComments />} />
 
                 {/* Catch-all fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
@@ -59,16 +63,30 @@ export default function App() {
             {/* Global Mobile Bottom Navigation */}
             <BottomNav />
             
+            {/* Styled Toaster to match Facebook Dark theme */}
             <Toaster position="top-center" toastOptions={{
               style: { 
-                background: '#0f172a', 
-                color: '#f1f5f9', 
-                border: '1px solid #1e293b', 
+                background: '#242526', 
+                color: '#e4e6eb', 
+                border: '1px solid #3e4042', 
                 fontSize: '12px', 
                 fontWeight: 'bold', 
                 textTransform: 'uppercase', 
-                letterSpacing: '0.05em' 
-              }
+                letterSpacing: '0.05em',
+                fontFamily: '"JetBrains Mono", monospace'
+              },
+              success: {
+                iconTheme: {
+                  primary: '#2d88ff',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
             }} />
           </div>
         </MicProvider>

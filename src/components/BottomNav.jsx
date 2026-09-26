@@ -12,38 +12,35 @@ export default function BottomNav({ unreadCount = 0 }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-slate-950/80 backdrop-blur-xl border-t border-slate-800/50 z-50 pb-safe">
+    <nav className="fixed bottom-0 left-0 w-full bg-[#242526] border-t border-[#3e4042] z-50 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.2)]">
       <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          // Smart Active State Routing: Keeps parent tab highlighted when inside child routes
+          const isActive = 
+            location.pathname === item.path || 
+            (item.path === '/' && (location.pathname === '/ticket' || location.pathname === '/stage')) ||
+            (item.path === '/scene' && location.pathname.startsWith('/comments')) ||
+            (item.path === '/profile' && (location.pathname === '/list-mic' || location.pathname === '/signup' || location.pathname === '/host'));
           
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="relative flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform"
+              className={`flex flex-col items-center justify-center w-full h-full gap-1 active:scale-95 transition-colors relative ${
+                isActive ? 'text-[#2d88ff]' : 'text-[#b0b3b8] hover:text-white'
+              }`}
             >
-              {/* Active Indicator Dot */}
-              {isActive && (
-                <span className="absolute top-1 w-1 h-1 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
-              )}
-              
               <div className="relative">
-                <i className={`fa-solid ${item.icon} text-lg transition-colors ${
-                  isActive ? 'text-blue-500' : 'text-slate-500'
-                }`}></i>
+                <i className={`fa-solid ${item.icon} text-lg`}></i>
 
-                {/* Message Tally Badge */}
                 {item.tally > 0 && (
-                  <span className="absolute -top-1.5 -right-2 bg-blue-600 text-white font-mono-data text-[9px] font-black px-1.5 py-0.2 rounded-full border border-slate-950 shadow-md">
+                  <span className="absolute -top-1.5 -right-2.5 bg-[#2d88ff] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full font-mono-data shadow-md border border-[#242526]">
                     {item.tally > 99 ? '99+' : item.tally}
                   </span>
                 )}
               </div>
               
-              <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${
-                isActive ? 'text-slate-200' : 'text-slate-600'
-              }`}>
+              <span className="text-[10px] font-bold tracking-wide">
                 {item.label}
               </span>
             </button>

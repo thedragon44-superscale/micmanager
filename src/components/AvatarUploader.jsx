@@ -94,38 +94,47 @@ export default function AvatarUploader({ userId, currentAvatar, onUploadSuccess 
     <>
       <div className="relative group cursor-pointer flex-shrink-0 z-10">
         <img 
-          src={currentAvatar || `https://ui-avatars.com/api/?name=User&background=312e81&color=fff`} 
+          src={currentAvatar || `https://ui-avatars.com/api/?name=User&background=18191a&color=e4e6eb`} 
           alt="Avatar" 
-          className="w-24 h-24 rounded-full object-cover border-2 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+          className="w-24 h-24 rounded-full object-cover border-2 border-[#2d88ff] shadow-sm"
         />
-        <label className="absolute inset-0 flex items-center justify-center bg-slate-950/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
+        <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-sm">
           <i className="fa-solid fa-camera text-white text-xl"></i>
           <input type="file" accept="image/*" onChange={onSelectFile} className="hidden" />
         </label>
       </div>
 
       {imgSrc && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6 animate-fade-in">
-          <div className="w-full max-w-sm flex flex-col gap-6 items-center">
-            <div className="text-center w-full mb-2">
-              <h3 className="text-white font-black uppercase tracking-widest text-lg">Crop Avatar</h3>
-              <p className="text-slate-400 text-xs mt-1">Pinch and drag to adjust your headshot.</p>
+        <div className="fixed inset-0 z-[200] bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-[#242526] border border-[#3e4042] rounded-2xl p-5 shadow-2xl flex flex-col gap-4 items-center">
+            
+            <div className="text-center w-full mb-1">
+              <h3 className="text-white font-bold uppercase tracking-wide font-display text-lg">Crop Avatar</h3>
+              <p className="text-[#b0b3b8] font-mono-data text-[10px] mt-0.5">Pinch and drag to adjust your headshot.</p>
             </div>
             
-            <div className="w-full bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-2 mb-5 max-h-[280px]">
+            <div className="w-full bg-[#18191a] rounded-xl overflow-hidden border border-[#3e4042] flex items-center justify-center p-2 max-h-[280px]">
               <ReactCrop crop={crop} onChange={(pixelCrop) => setCrop(pixelCrop)} aspect={1} circularCrop>
                 <img ref={imgRef} src={imgSrc} alt="Crop preview" onLoad={onImageLoad} className="max-h-[220px] w-auto object-contain" />
               </ReactCrop>
             </div>
             
-            <div className="flex gap-3 w-full mt-4">
-              <button onClick={() => setImgSrc('')} className="flex-1 py-4 text-xs font-bold text-slate-300 bg-slate-800 rounded-xl hover:bg-slate-700 uppercase tracking-widest transition-colors shadow-sm">
+            <div className="flex gap-2 w-full mt-2">
+              <button 
+                onClick={() => setImgSrc('')} 
+                className="flex-1 py-3 text-[10px] font-bold text-white bg-[#18191a] border border-[#3e4042] rounded-lg hover:bg-gray-800 uppercase tracking-widest font-mono-data transition-colors"
+              >
                 Cancel
               </button>
-              <button onClick={handleUpload} disabled={isUploading} className="flex-1 py-4 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-500 uppercase tracking-widest transition-all shadow-lg shadow-indigo-900/50 active:scale-95 disabled:opacity-50">
+              <button 
+                onClick={handleUpload} 
+                disabled={isUploading} 
+                className="flex-1 py-3 text-[10px] font-bold text-white bg-[#2d88ff] hover:bg-[#1b74e4] rounded-lg uppercase tracking-widest font-mono-data transition-colors disabled:opacity-50"
+              >
                 {isUploading ? 'Saving...' : 'Save Crop'}
               </button>
             </div>
+            
           </div>
         </div>
       )}

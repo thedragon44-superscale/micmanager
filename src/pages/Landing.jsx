@@ -1,206 +1,160 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMic } from '../MicContext';
-import ProfileCard from '../components/ProfileCard';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { queue, myComicProfile, market } = useMic();
-  const [showRoster, setShowRoster] = useState(false);
-  const [selectedComicId, setSelectedComicId] = useState(null);
-  const [events, setEvents] = useState([]);
+  const { queue, myComicProfile, market, activeEventId } = useMic();
+  
+  const [todayMics, setTodayMics] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showRosterModal, setShowRosterModal] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     fetch(`${import.meta.env.VITE_API_URL}/events/today?market=${market}`)
-      .then(res => res.json())
-      .then(data => setEvents(data))
-      .catch(err => console.error(err));
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setTodayMics(data || []))
+      .catch(err => console.error("Error fetching today's mics:", err))
+      .finally(() => setIsLoading(false));
   }, [market]);
 
-  const activeQueue = queue.filter(c => c.status !== 'completed');
+  const activeQueue = queue.filter(c => c.status !== 'completed' && c.status !== 'dropped');
   const amIOnList = myComicProfile && activeQueue.some(c => c.id === myComicProfile.id);
+  const activeMicsCount = todayMics.filter(m => m.status === 'active').length;
 
-  const handleActionClick = () => {
-    if (amIOnList) {
-      navigate('/ticket');
-    } else {
-      navigate('/signup');
-    }
+  // Smart truncation for the map pins (Removes "The " so "The Creek" becomes "Creek")
+  const formatVenueName = (name) => {
+    if (!name) return 'Venue';
+    const cleanName = name.replace(/^(The\s+)/i, '');
+    return cleanName.split(' ')[0];
   };
 
   return (
-    <div className="p-4 sm:p-5 flex flex-col gap-5 animate-fade-in max-w-md mx-auto w-full">
+    <div className="flex flex-col gap-3 p-3 pb-24 animate-fade-in max-w-md mx-auto w-full">
       
-      {/* PAGE TITLE */}
-      <div className="flex justify-between items-end border-b border-slate-800/80 pb-3 mt-1">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            <span className="text-[10px] font-mono-data uppercase tracking-widest text-blue-400 font-bold">Radar Active</span>
-          </div>
-          <h1 className="text-3xl font-black text-white uppercase tracking-tight font-display">Tonight's Mics</h1>
-        </div>
+      <div className="flex justify-between items-center px-1 pt-1">
+        <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Tonight's Mics</h1>
+        <span className="text-[10px] font-mono-data text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded uppercase font-bold">
+          {activeMicsCount} Active
+        </span>
       </div>
 
-      {/* EVENTS / MICS LIST */}
-      <div className="flex flex-col gap-4">
-        {events.length === 0 ? (
-          <div className="text-center text-slate-500 py-12 font-mono-data text-xs uppercase tracking-widest border border-dashed border-slate-800 rounded-2xl bg-slate-950/50">
-            No active mics in {market.replace('_', ' ')} today.
-          </div>
-        ) : (
-          events.map(event => {
-            const isActive = event.status === 'active';
-            
-            return (
-              <div 
-                key={event.id} 
-                className={`relative rounded-2xl p-5 transition-all duration-300 ${
-                  isActive 
-                    ? 'bg-slate-900/90 border border-blue-500/30 glow-blue' 
-                    : 'bg-slate-900/40 border border-slate-800/80 opacity-70'
-                }`}
-              >
-                {isActive && (
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                )}
+      {/* DYNAMIC LOGISTICS RADAR MAP */}
+      {!isLoading && todayMics.length > 0 && (
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm flex flex-col">
+          <div className="h-28 map-pattern relative w-full border-b border-[#3e4042] flex items-center justify-center">
+            {todayMics.slice(0, 2).map((mic, index) => {
+              const isFirst = index === 0;
+              const positionClass = isFirst ? "top-3 left-1/4" : "bottom-3 right-1/3";
+              const pinColor = mic.status === 'active' ? "text-emerald-500" : "text-[#b0b3b8]";
+              const badgeColor = mic.status === 'active' ? "bg-emerald-500 text-slate-950" : "bg-[#242526] text-white border border-[#3e4042]";
+              
+              const displayDistance = mic.distance_miles ? `${mic.distance_miles}m` : isFirst ? '0.2m' : '1.4m';
 
-                <div className="flex justify-between items-start gap-3 relative z-10 mb-3">
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-white tracking-wide">{event.name}</h3>
-                    <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
-                      <i className="fa-solid fa-location-dot text-blue-400 text-[10px]"></i> {event.venue}
-                    </p>
+              return (
+                <div key={mic.id} className={`absolute ${positionClass} flex flex-col items-center animate-fade-in`}>
+                  <div className={`${badgeColor} text-[9px] font-bold px-1.5 py-0.5 rounded shadow-lg mb-0.5 font-mono-data truncate max-w-[100px]`}>
+                    {formatVenueName(mic.venue)} ({displayDistance})
                   </div>
-
-                  <span className={`text-[9px] font-mono-data font-black px-2.5 py-1 rounded-md border uppercase tracking-widest shrink-0 ${
-                    isActive 
-                      ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' 
-                      : 'bg-slate-800/80 text-slate-400 border-slate-700/50'
-                  }`}>
-                    {isActive ? '● Live Signups' : event.status}
-                  </span>
+                  <i className={`fa-solid fa-location-pin ${pinColor} text-base drop-shadow-md`}></i>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between relative z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-slate-800/80 border border-slate-700/50 flex items-center justify-center text-slate-400">
-                      <i className="fa-solid fa-users text-xs"></i>
-                    </div>
-                    <div>
-                      <span className="text-sm font-black font-mono-data text-white">{activeQueue.length}</span>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block -mt-1">On List</span>
-                    </div>
-                  </div>
-
-                  {isActive && (
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => setShowRoster(true)}
-                        className="bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700/60"
-                      >
-                        Roster
-                      </button>
-                      <button 
-                        onClick={handleActionClick}
-                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg ${
-                          amIOnList 
-                            ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-950/50' 
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-950/50 glow-blue'
-                        }`}
-                      >
-                        {amIOnList ? 'My Ticket' : 'Sign Up'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* HOST PORTAL CARD */}
-      <div 
-        onClick={() => navigate('/host')}
-        className="mt-1 bg-slate-900/60 border border-amber-500/20 hover:border-amber-500/40 rounded-2xl p-4 flex justify-between items-center group cursor-pointer active:scale-95 transition-all shadow-lg"
-      >
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover:bg-amber-500/20 transition-colors">
-            <i className="fa-solid fa-key text-amber-400 text-sm"></i>
+              );
+            })}
           </div>
-          <div>
-            <h3 className="text-xs font-black text-slate-200 uppercase tracking-widest group-hover:text-amber-400 transition-colors font-display">Host Portal</h3>
-            <p className="text-[10px] text-slate-500 font-mono-data uppercase tracking-wider mt-0.5">Manage Stage & Clock In</p>
-          </div>
-        </div>
-        <div className="w-7 h-7 rounded-full bg-slate-950 flex items-center justify-center border border-slate-800 group-hover:border-amber-500/40 transition-colors">
-          <i className="fa-solid fa-arrow-right text-slate-500 text-[10px] group-hover:text-amber-400 transition-colors"></i>
-        </div>
-      </div>
-
-      {/* PUBLIC ROSTER MODAL */}
-      {showRoster && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowRoster(false)}>
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-sm flex flex-col max-h-[80vh] shadow-2xl" onClick={e => e.stopPropagation()}>
-            
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
-              <div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight font-display">Live Roster</h3>
-                <p className="text-[10px] text-slate-400 font-mono-data uppercase">{activeQueue.length} Comics Checked In</p>
-              </div>
-              <button onClick={() => setShowRoster(false)} className="text-slate-500 hover:text-white font-bold text-lg p-1">✕</button>
+          <div className="p-2.5 flex justify-between items-center">
+            <div>
+              <h3 className="text-xs font-bold text-white">Logistics Radar Map</h3>
+              <p className="text-[10px] text-[#b0b3b8]">Live market routing</p>
             </div>
-            
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {activeQueue.length === 0 ? (
-                <div className="text-center text-slate-500 py-8 font-mono-data text-xs uppercase">The list is empty.</div>
-              ) : (
-                activeQueue.map((comic, idx) => {
-                  const isMe = myComicProfile && myComicProfile.id === comic.id;
-                  
-                  let badge = null;
-                  if (comic.status === 'on_stage') {
-                    badge = <span className="text-[9px] bg-red-500/20 text-red-400 border border-red-500/40 font-black px-2 py-0.5 rounded uppercase tracking-widest animate-pulse">On Stage</span>;
-                  } else if (comic.status === 'on_deck') {
-                    badge = <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/40 font-black px-2 py-0.5 rounded uppercase tracking-widest">On Deck</span>;
-                  }
-
-                  return (
-                    <div key={comic.id} className={`p-3 rounded-xl border flex justify-between items-center transition-all ${isMe ? 'bg-blue-950/30 border-blue-500/50 glow-blue' : 'bg-slate-950 border-slate-800/80'}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono-data font-bold text-slate-600 w-5">{(idx + 1).toString().padStart(2, '0')}</span>
-                        <button 
-                          onClick={() => setSelectedComicId(comic.id)} 
-                          className={`font-bold text-sm hover:text-blue-400 transition-colors text-left ${isMe ? 'text-blue-400 font-extrabold' : 'text-slate-200'}`}
-                        >
-                          {comic.name} {isMe && '(You)'}
-                        </button>
-                      </div>
-                      {badge}
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <span className="text-[10px] font-mono-data text-[#2d88ff] font-bold uppercase tracking-widest">{market.split('_').join(' ')}</span>
           </div>
         </div>
       )}
 
-      {/* PROFILE CARD MODAL */}
-      {selectedComicId && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-sm my-auto animate-fade-in flex justify-center">
-            <ProfileCard 
-              userId={selectedComicId} 
-              currentUserId={myComicProfile?.id} 
-              onClose={() => setSelectedComicId(null)} 
-            />
-          </div>
+      {/* Dynamic Mics Feed based on Database */}
+      {isLoading ? (
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-8 text-center shadow-sm">
+          <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2"></i>
+          <p className="text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">Loading scenes...</p>
         </div>
+      ) : todayMics.length === 0 ? (
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-8 text-center shadow-sm">
+          <p className="text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">No mics scheduled for {market.split('_').join(' ')} today.</p>
+        </div>
+      ) : (
+        todayMics.map(mic => {
+          const isActive = mic.status === 'active';
+          const isMyActiveMic = isActive && activeEventId === mic.id;
+
+          return (
+            <div 
+              key={mic.id} 
+              className={`bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex flex-col gap-3 ${!isActive ? 'opacity-80' : ''}`}
+            >
+              <div className="flex justify-between items-start border-b border-[#3e4042] pb-2.5">
+                <div>
+                  <h3 className="text-lg font-bold text-white font-display tracking-wide">{mic.name}</h3>
+                  <p className="text-[11px] text-[#b0b3b8] mt-0.5 truncate">
+                    <i className="fa-solid fa-location-dot mr-1 text-[#2d88ff]"></i> 
+                    {mic.venue} {mic.address && `• ${mic.address}`}
+                  </p>
+                </div>
+                {isActive ? (
+                  <span className="text-[9px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-widest font-mono-data shrink-0 ml-2">
+                    ● Live Signups
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-bold px-2 py-1 rounded bg-[#18191a] text-[#b0b3b8] border border-[#3e4042] uppercase tracking-widest font-mono-data shrink-0 ml-2">
+                    Scheduled
+                  </span>
+                )}
+              </div>
+
+              {isActive ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col text-[11px] font-mono-data text-[#b0b3b8]">
+                      <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
+                      <span>Sign Up: <strong className="text-white">{mic.signup_time}</strong> • Start: <strong className="text-white">{mic.start_time}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center text-[#b0b3b8]">
+                        <i className="fa-solid fa-users text-xs"></i>
+                      </div>
+                      <div>
+                        <span className="text-sm font-bold font-mono-data text-white block leading-none">
+                          {isMyActiveMic ? queue.length : '-'}
+                        </span>
+                        <span className="text-[9px] text-[#b0b3b8] uppercase font-bold">On List</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <button 
+                      onClick={() => setShowRosterModal(true)} 
+                      className="flex-1 bg-[#18191a] border border-[#3e4042] text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 font-mono-data transition-colors"
+                    >
+                      Roster
+                    </button>
+                    <button 
+                      onClick={() => navigate(amIOnList && isMyActiveMic ? '/ticket' : '/signup')} 
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest font-mono-data shadow-md transition-colors"
+                    >
+                      {amIOnList && isMyActiveMic ? 'My Ticket' : 'Sign Up'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between items-center text-[11px] font-mono-data text-[#b0b3b8]">
+                  <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
+                  <span>Signups open when host clocks in</span>
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );

@@ -7,9 +7,12 @@ export default function HostDashboard() {
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [pin, setPin] = useState('');
+  
+  // Wiring in your exact backend state logic
   const { activateMic, isHostClockedIn, endSession, market, myComicProfile } = useMic();
   const navigate = useNavigate();
 
+  // Fetch today's mics for the active market
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/events/today?market=${market}`)
       .then(res => res.json())
@@ -43,30 +46,27 @@ export default function HostDashboard() {
   };
 
   return (
-    <div className="p-4 sm:p-6 flex flex-col gap-6 animate-fade-in flex-1 max-w-md mx-auto w-full">
+    <div className="p-3 flex flex-col gap-3 animate-fade-in flex-1 max-w-md mx-auto w-full pb-24">
       
       {/* HEADER */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-          <h2 className="text-2xl font-black text-slate-100 uppercase tracking-tight font-display">Host Portal</h2>
-        </div>
-        <p className="text-xs text-slate-400 font-medium mt-1">Manage stage controls, clock into live mics, or list new events.</p>
+      <div className="pt-2 px-1">
+        <h1 className="text-2xl font-black text-white uppercase tracking-wide font-display">Host Portal</h1>
+        <p className="text-[10px] text-[#b0b3b8] font-mono-data mt-0.5 uppercase tracking-widest">Manage stage controls & clock in.</p>
       </div>
 
       {/* LOGIN GUARD WARNING IF NOT LOGGED IN */}
       {!myComicProfile && (
-        <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-5 text-center shadow-lg">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-sm mx-auto mb-3">
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-5 text-center shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center text-amber-500 text-sm mx-auto mb-3">
             <i className="fa-solid fa-lock"></i>
           </div>
-          <h3 className="text-sm font-black text-amber-400 uppercase tracking-wide font-display">Sign In Required</h3>
-          <p className="text-xs text-slate-300 font-medium mt-1 mb-4">
+          <h3 className="text-xs font-bold text-white uppercase font-mono-data">Sign In Required</h3>
+          <p className="text-[10px] text-[#b0b3b8] mt-1 mb-4 leading-relaxed">
             You must be logged into a verified comic account before clocking in as host or opening stage controls.
           </p>
           <button
             onClick={() => navigate('/profile')}
-            className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-amber-950/50"
+            className="w-full bg-[#2d88ff] hover:bg-[#1b74e4] text-white font-bold py-2.5 rounded-lg text-[10px] uppercase font-mono-data transition-colors"
           >
             Go to Sign In
           </button>
@@ -74,71 +74,68 @@ export default function HostDashboard() {
       )}
 
       {/* QUICK ACTION: CREATE NEW MIC */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group shadow-lg">
-        <div className="flex justify-between items-center relative z-10">
-          <div>
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <i className="fa-solid fa-plus-circle text-indigo-400"></i> List New Mic
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">Set up a recurring or one-time open mic event.</p>
-          </div>
-          <button 
-            onClick={() => {
-              if (!myComicProfile) {
-                toast.error("Please log in first");
-                navigate('/profile');
-              } else {
-                navigate('/list-mic');
-              }
-            }}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 shrink-0"
-          >
-            Create
-          </button>
+      <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex justify-between items-center">
+        <div>
+          <h3 className="font-bold text-sm text-white flex items-center gap-2">
+            <i className="fa-solid fa-plus-circle text-[#2d88ff]"></i> List New Mic
+          </h3>
+          <p className="text-[10px] text-[#b0b3b8] mt-0.5">Set up a recurring or one-time open mic event.</p>
         </div>
+        <button 
+          onClick={() => {
+            if (!myComicProfile) {
+              toast.error("Please log in first");
+              navigate('/profile');
+            } else {
+              navigate('/list-mic');
+            }
+          }}
+          className="bg-[#18191a] hover:bg-gray-800 border border-[#3e4042] text-white font-bold text-[10px] uppercase font-mono-data px-3.5 py-2 rounded-lg transition-colors shrink-0"
+        >
+          Create
+        </button>
       </div>
 
       {/* CLOCK-IN / ACTIVE HOST SECTION */}
       {myComicProfile && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-          <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-key text-amber-400"></i> Stage Clock-In
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex flex-col gap-3">
+          <h3 className="text-xs font-bold text-white uppercase font-mono-data flex items-center gap-2 border-b border-[#3e4042] pb-2.5">
+            <i className="fa-solid fa-key text-[#2d88ff]"></i> Stage Clock-In
           </h3>
-          <p className="text-xs text-slate-400 mb-6">Select tonight's session and enter your Host PIN to run the stage queue.</p>
 
           {isHostClockedIn ? (
-            <div className="space-y-3">
-              <div className="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-4 text-center">
-                <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center justify-center gap-2">
+            <div className="space-y-3 pt-1">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-center">
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest font-mono-data flex items-center justify-center gap-1.5">
                   <i className="fa-solid fa-circle-check"></i> Host Active & Clocked In
                 </p>
               </div>
               <button 
                 onClick={() => navigate('/stage')}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-emerald-950/50 active:scale-95"
+                className="w-full bg-[#2d88ff] hover:bg-[#1b74e4] text-white font-bold py-3 rounded-lg transition-colors text-[10px] uppercase font-mono-data"
               >
                 Go to Stage Controls
               </button>
               <button 
                 onClick={handleManualClockOut}
-                className="w-full bg-slate-950 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-slate-800 hover:border-red-900/40 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                className="w-full bg-[#18191a] hover:bg-gray-800 text-[#b0b3b8] hover:text-white border border-[#3e4042] py-2.5 rounded-lg font-bold text-[10px] uppercase font-mono-data transition-colors"
               >
                 Clock Out
               </button>
             </div>
           ) : (
-            <form onSubmit={handleClockIn} className="space-y-4">
+            <form onSubmit={handleClockIn} className="space-y-3 pt-1">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Select Mic</label>
+                <label className="block text-[10px] font-bold text-[#b0b3b8] uppercase tracking-widest font-mono-data mb-1.5">Select Mic</label>
                 {events.length === 0 ? (
-                  <div className="text-xs font-mono-data text-slate-500 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <div className="text-[10px] font-mono-data text-[#b0b3b8] bg-[#18191a] p-3 rounded-lg border border-[#3e4042]">
                     No scheduled mics found for today.
                   </div>
                 ) : (
                   <select 
                     value={selectedEventId} 
                     onChange={(e) => setSelectedEventId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-slate-100 focus:outline-none focus:border-amber-500 text-xs font-bold"
+                    className="w-full bg-[#18191a] border border-[#3e4042] rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-[#2d88ff] text-xs font-bold transition-colors"
                   >
                     {events.map(ev => (
                       <option key={ev.id} value={ev.id}>
@@ -150,13 +147,13 @@ export default function HostDashboard() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Host PIN</label>
+                <label className="block text-[10px] font-bold text-[#b0b3b8] uppercase tracking-widest font-mono-data mb-1.5">Host PIN</label>
                 <input 
                   type="password" 
                   value={pin} 
                   onChange={(e) => setPin(e.target.value)} 
                   placeholder="••••" 
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono-data tracking-[0.5em] text-amber-400 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-[#18191a] border border-[#3e4042] rounded-lg px-4 py-2.5 text-center text-xl font-mono-data tracking-[0.5em] text-[#2d88ff] focus:outline-none focus:border-[#2d88ff] transition-colors"
                   maxLength={4}
                   required
                 />
@@ -165,7 +162,7 @@ export default function HostDashboard() {
               <button 
                 type="submit"
                 disabled={events.length === 0}
-                className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-black py-3.5 rounded-xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-amber-950/50 active:scale-95 mt-2"
+                className="w-full bg-[#2d88ff] hover:bg-[#1b74e4] disabled:opacity-40 text-white font-bold py-3 rounded-lg transition-colors text-[10px] uppercase font-mono-data mt-1"
               >
                 Clock In & Open Stage
               </button>

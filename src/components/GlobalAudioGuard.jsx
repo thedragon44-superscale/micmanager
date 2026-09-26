@@ -173,14 +173,14 @@ export default function GlobalAudioGuard() {
   if (!isRecording && !isUploading) return null;
 
   return (
-    <div className="fixed bottom-20 right-4 z-[300] bg-slate-900 border border-red-500/80 rounded-2xl p-3 shadow-2xl flex items-center gap-3 backdrop-blur-md animate-bounce-short">
-      <div className="flex items-center gap-2">
-        <span className="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
+    <div className="fixed bottom-[80px] right-4 z-[300] bg-[#242526] border border-red-500/50 rounded-xl p-3 shadow-lg flex items-center gap-3 backdrop-blur-md">
+      <div className="flex items-center gap-2.5">
+        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
         <div className="flex flex-col">
-          <span className="text-[10px] font-black uppercase tracking-widest text-red-400">
+          <span className="text-[9px] font-bold uppercase tracking-widest font-mono-data text-red-400">
             {isUploading ? 'Saving Set...' : 'Live Stage Guard'}
           </span>
-          <span className="text-xs font-mono font-bold text-slate-100">
+          <span className="text-xs font-mono-data font-bold text-white">
             {formatSeconds(recordingTime)}
           </span>
         </div>
@@ -193,7 +193,7 @@ export default function GlobalAudioGuard() {
             stopAndAutoSave();
           }}
           disabled={isUploading}
-          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors border border-red-400 shadow-md"
+          className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest font-mono-data transition-colors shadow-sm ml-1"
         >
           Stop & Save
         </button>
