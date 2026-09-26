@@ -103,6 +103,16 @@ export function MicProvider({ children }) {
 
     const wsUrl = API_URL.replace("http", "ws");
     const socket = new WebSocket(`${wsUrl}/ws/${activeEventId}`);
+    let pingInterval;
+
+    socket.onopen = () => {
+      // Send a PING every 30 seconds to bypass Cloudflare's 100s idle timeout
+      pingInterval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send("PING");
+        }
+      }, 30000);
+    };
 
     socket.onmessage = (event) => {
       if (event.data === "REFRESH_QUEUE") {
@@ -116,7 +126,10 @@ export function MicProvider({ children }) {
       }
     };
 
-    return () => socket.close();
+    return () => {
+      if (pingInterval) clearInterval(pingInterval);
+      socket.close();
+    };
   }, [activeEventId, API_URL, loadQueue]);
 
   // Actions

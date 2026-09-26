@@ -18,7 +18,7 @@ export default function Ticket() {
   ];
 
   return (
-    <div className="flex flex-col h-full animate-fade-in max-w-md mx-auto pb-20">
+    <div className="flex flex-col h-full max-w-md mx-auto pb-32">
       <div className="p-3 pb-0">
         <button onClick={() => navigate('/')} className="text-[#2d88ff] text-xs font-bold self-start flex items-center gap-1 mb-3 hover:underline">
           <i className="fa-solid fa-arrow-left"></i> Back to Mics
@@ -75,7 +75,7 @@ export default function Ticket() {
 
       {/* --- MIC CHAT TAB --- */}
       {ticketTab === 'chat' && (
-        <div className="flex flex-col flex-1 bg-[#242526] border border-[#3e4042] rounded-xl mx-3 mb-3 overflow-hidden shadow-sm h-[500px]">
+        <div className="flex flex-col flex-1 bg-[#242526] border-x border-t border-[#3e4042] rounded-t-xl mx-3 overflow-hidden shadow-sm">
           <div className="bg-[#18191a] border-b border-[#3e4042] p-2.5 flex justify-between items-center shrink-0">
             <span className="text-xs font-bold text-white uppercase tracking-wider font-mono-data">
               <i className="fa-solid fa-tower-broadcast text-emerald-500 mr-1.5 animate-pulse"></i> Mic Chat Room
@@ -118,7 +118,7 @@ export default function Ticket() {
           </div>
 
           {/* Chat Input Bar */}
-          <div className="p-2.5 bg-[#18191a] border-t border-[#3e4042] shrink-0 flex items-center gap-2 relative">
+          <div className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex items-center gap-2 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
             {/* The + Popover Menu */}
             {showPlusMenu && (
               <div className="absolute bottom-12 left-2 w-48 bg-[#242526] border border-[#3e4042] rounded-xl p-1.5 shadow-2xl z-20 animate-fade-in">
