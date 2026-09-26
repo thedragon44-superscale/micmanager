@@ -885,20 +885,29 @@ def get_feed_post(post_id: int, db: Session = Depends(get_db)):
 
 @app.post("/feed/{post_id}/like")
 def toggle_post_like(post_id: int, payload: FeedInteractionPayload, db: Session = Depends(get_db)):
-    # Toggle like using raw SQL to bypass models schema requirements
-    existing = db.execute(text("SELECT id FROM feed_likes WHERE target_type='post' AND target_id=:post_id AND user_id=:user_id"), 
-                          {"post_id": post_id, "user_id": payload.user_id}).fetchone()
-    
-    if existing:
-        db.execute(text("DELETE FROM feed_likes WHERE id=:id"), {"id": existing[0]})
-        db.execute(text("UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id=:post_id"), {"post_id": post_id})
-    else:
-        db.execute(text("INSERT INTO feed_likes (target_type, target_id, user_id) VALUES ('post', :post_id, :user_id)"), 
-                   {"post_id": post_id, "user_id": payload.user_id})
-        db.execute(text("UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id=:post_id"), {"post_id": post_id})
+    try:
+        existing = db.execute(text("SELECT id FROM feed_likes WHERE target_type='post' AND target_id=:post_id AND user_id=:user_id"), 
+                              {"post_id": post_id, "user_id": payload.user_id}).fetchone()
         
-    db.commit()
-    return {"status": "success"}
+        if existing:
+            db.execute(text("DELETE FROM feed_likes WHERE id=:id"), {"id": existing[0]})
+            try:
+                db.execute(text("UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id=:post_id"), {"post_id": post_id})
+            except Exception:
+                pass # Ignore if column doesn't exist
+        else:
+            db.execute(text("INSERT INTO feed_likes (target_type, target_id, user_id) VALUES ('post', :post_id, :user_id)"), 
+                       {"post_id": post_id, "user_id": payload.user_id})
+            try:
+                db.execute(text("UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id=:post_id"), {"post_id": post_id})
+            except Exception:
+                pass # Ignore if column doesn't exist
+            
+        db.commit()
+        return {"status": "success"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/comments/{comment_id}/like")
 def toggle_comment_like(comment_id: int, payload: FeedInteractionPayload, db: Session = Depends(get_db)):
@@ -935,33 +944,40 @@ def get_post_comments(post_id: int, db: Session = Depends(get_db)):
 
 @app.post("/feed/{post_id}/comments")
 def add_post_comment(post_id: int, payload: FeedCommentPayload, db: Session = Depends(get_db)):
-    db.execute(text("""
-        INSERT INTO feed_comments (post_id, author_id, author_name, content, timestamp) 
-        VALUES (:post_id, :author_id, :author_name, :content, :timestamp)
-    """), {
-        "post_id": post_id,
-        "author_id": payload.author_id,
-        "author_name": payload.author_name,
-        "content": payload.content,
-        "timestamp": payload.timestamp
-    })
-    
-    db.execute(text("UPDATE feed_posts SET comments_count = comments_count + 1 WHERE id=:post_id"), {"post_id": post_id})
-    db.commit()
-    
-    # Return the inserted record ID
-    new_id = db.execute(text("SELECT last_insert_rowid()")).scalar()
-    
-    return {
-        "id": new_id,
-        "post_id": post_id,
-        "author_id": payload.author_id,
-        "author_name": payload.author_name,
-        "content": payload.content,
-        "timestamp": payload.timestamp,
-        "likes_count": 0,
-        "user_liked": False
-    }
+    try:
+        db.execute(text("""
+            INSERT INTO feed_comments (post_id, author_id, author_name, content, timestamp) 
+            VALUES (:post_id, :author_id, :author_name, :content, :timestamp)
+        """), {
+            "post_id": post_id,
+            "author_id": payload.author_id,
+            "author_name": payload.author_name,
+            "content": payload.content,
+            "timestamp": payload.timestamp
+        })
+        
+        # Safely attempt to update count, ignore if original schema lacks the column
+        try:
+            db.execute(text("UPDATE feed_posts SET comments_count = comments_count + 1 WHERE id=:post_id"), {"post_id": post_id})
+        except Exception:
+            pass 
+            
+        db.commit()
+        new_id = db.execute(text("SELECT last_insert_rowid()")).scalar()
+        
+        return {
+            "id": new_id,
+            "post_id": post_id,
+            "author_id": payload.author_id,
+            "author_name": payload.author_name,
+            "content": payload.content,
+            "timestamp": payload.timestamp,
+            "likes_count": 0,
+            "user_liked": False
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/users/{user_id}/feed", response_model=schemas.FeedPostResponse)

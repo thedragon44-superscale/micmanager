@@ -34,7 +34,7 @@ export default function SceneComments() {
       })
       .then(data => setComments(Array.isArray(data) ? data : data.comments || []))
       .catch(err => {
-        console.warn("Backend missing comment table for this post:", err);
+        console.warn("No comments found:", err);
         setComments([]);
       })
       .finally(() => setIsLoading(false));
@@ -58,7 +58,7 @@ export default function SceneComments() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/comments/${commentId}/like`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: myComicProfile.id })
+        body: JSON.stringify({ user_id: parseInt(myComicProfile.id) })
       });
       if (!res.ok) throw new Error("Like rejected by backend");
     } catch (err) {
@@ -81,11 +81,11 @@ export default function SceneComments() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          post_id: postId,
-          author_id: myComicProfile.id,
+          post_id: parseInt(postId),
+          author_id: parseInt(myComicProfile.id),
           author_name: myComicProfile.name,
           content: newComment,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         })
       });
 
@@ -95,12 +95,7 @@ export default function SceneComments() {
         setNewComment('');
         setParentPost(prev => prev ? { ...prev, comments_count: (parseInt(prev.comments_count) || 0) + 1 } : prev);
       } else {
-        // Explicitly catch the 404 shown in the console
-        if (res.status === 404) {
-          toast.error("This specific post does not support comments.");
-        } else {
-          toast.error("Failed to save comment to database.");
-        }
+        toast.error("Failed to save comment.");
       }
     } catch (err) {
       toast.error("Network error posting comment.");
@@ -140,6 +135,7 @@ export default function SceneComments() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
+        {/* PARENT POST */}
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm mb-4">
           <div className="flex items-center justify-between mb-2">
             {parentPost.is_system ? (
@@ -179,6 +175,7 @@ export default function SceneComments() {
           </div>
         </div>
 
+        {/* COMMENTS THREAD */}
         <div className="space-y-4 pl-2">
           {comments.length === 0 ? (
             <div className="text-center py-6 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
@@ -208,7 +205,6 @@ export default function SceneComments() {
                     >
                       Like {comment.likes_count > 0 && `(${comment.likes_count})`}
                     </button>
-                    <button className="hover:text-white transition-colors">Reply</button>
                   </div>
                 </div>
               </div>
@@ -217,6 +213,7 @@ export default function SceneComments() {
         </div>
       </div>
 
+      {/* INPUT FOOTER */}
       <div className="bg-[#242526] border-t border-[#3e4042] p-2.5 fixed bottom-[64px] left-0 right-0 max-w-md mx-auto z-20 shadow-lg">
         <form onSubmit={handlePostComment} className="flex gap-2 items-center relative">
           <input 
