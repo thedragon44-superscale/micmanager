@@ -49,7 +49,16 @@ export default function Inbox() {
           }];
           setThreads(systemDefault);
         } else {
-          setThreads(data);
+          setThreads(data.map(user => ({
+            id: `thread-${user.id}`,
+            partner_id: user.id,
+            partner_name: user.username,
+            avatar_url: user.avatar_url,
+            is_system: false,
+            last_message: 'Tap to view conversation',
+            timestamp: '',
+            unread: false
+          })));
         }
       })
       .catch(() => {
@@ -83,7 +92,8 @@ export default function Inbox() {
       return;
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/messages/thread/${myComicProfile.id}/${activeThread.partner_id}`)
+    const partnerId = activeThread.partner_id || activeThread.id;
+    fetch(`${import.meta.env.VITE_API_URL}/messages/thread/${myComicProfile.id}/${partnerId}`)
       .then(res => res.ok ? res.json() : [])
       .then(data => setMessages(data || []))
       .catch(err => console.error('Error fetching messages:', err));
@@ -126,11 +136,12 @@ export default function Inbox() {
     e.preventDefault();
     if (!newMessageText.trim() || !activeThread || !myComicProfile) return;
 
+    const partnerId = activeThread.partner_id || activeThread.id;
     const msgPayload = {
       id: Date.now().toString(),
       sender_id: myComicProfile.id,
       sender_name: myComicProfile.name,
-      recipient_id: activeThread.partner_id,
+      recipient_id: partnerId,
       content: newMessageText.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -256,7 +267,7 @@ export default function Inbox() {
         </div>
       ) : (
         /* --- VIEW 2: ACTIVE DIRECT THREAD --- */
-        <div className="flex flex-col h-full bg-[#18191a]">
+        <div className="flex flex-col h-full bg-[#18191a] pb-32">
           <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 shrink-0 shadow-sm sticky top-[60px] z-20">
             <button onClick={() => setActiveThread(null)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
               <i className="fa-solid fa-arrow-left"></i>
@@ -273,12 +284,12 @@ export default function Inbox() {
               </div>
             ) : (
               messages.map((msg, idx) => {
-                const isMe = msg.sender_id === myComicProfile.id;
-                const isSystemMsg = msg.sender_id === 'system' || activeThread.is_system;
+              const isMe = String(msg.sender_id) === String(myComicProfile.id);
+              const isSystemMsg = String(msg.sender_id) === 'system' || activeThread.is_system;
 
                 if (isSystemMsg) {
                   return (
-                    <div key={msg.id || idx} className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-center my-2 max-w-[90%] mx-auto">
+                    <div key={`sys-msg-${msg.id}-${idx}`} className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-center my-2 max-w-[90%] mx-auto">
                       <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider block mb-1">
                         <i className="fa-solid fa-circle-check mr-1"></i> Stage System
                       </span>
@@ -293,7 +304,7 @@ export default function Inbox() {
                 }
 
                 return (
-                  <div key={msg.id || idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div key={`msg-${msg.id}-${idx}`} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className="text-[9px] font-bold text-[#b0b3b8]">{isMe ? 'You' : msg.sender_name}</span>
                       <span className="text-[8px] font-mono-data text-[#b0b3b8]">{msg.timestamp}</span>
@@ -314,7 +325,7 @@ export default function Inbox() {
 
           {/* Chat Input Bar */}
           {!activeThread.is_system ? (
-            <form onSubmit={handleSendMessage} className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex gap-2 sticky bottom-[64px] z-20">
+            <form onSubmit={handleSendMessage} className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex gap-2 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
               <input
                 type="text"
                 value={newMessageText}
@@ -331,7 +342,7 @@ export default function Inbox() {
               </button>
             </form>
           ) : (
-            <div className="p-3 bg-[#242526] border-t border-[#3e4042] text-center sticky bottom-[64px] z-20">
+            <div className="p-3 bg-[#242526] border-t border-[#3e4042] text-center fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
               <span className="text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-wider">
                 System notifications are read-only
               </span>

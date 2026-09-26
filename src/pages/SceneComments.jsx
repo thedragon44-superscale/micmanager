@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useMic } from '../MicContext';
 import toast from 'react-hot-toast';
@@ -188,7 +188,7 @@ export default function SceneComments() {
             </div>
           ) : (
             comments.map((comment, index) => (
-              <div key={comment.id || index} className="flex gap-3 relative">
+              <div key={`comment-${comment.id}-${index}`} className="flex gap-3 relative">
                 {index !== comments.length - 1 && (
                   <div className="absolute left-3.5 top-8 bottom-[-16px] w-[1px] bg-[#3e4042]"></div>
                 )}

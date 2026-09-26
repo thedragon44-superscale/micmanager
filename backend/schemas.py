@@ -174,6 +174,8 @@ class FeedPostResponse(FeedPostBase):
     author_id: int | None
     market: str
     post_type: str
+    likes_count: int = 0
+    comments_count: int = 0
     created_at: datetime
     author: FeedPostAuthor | None = None
 

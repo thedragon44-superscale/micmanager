@@ -166,6 +166,8 @@ class FeedPost(Base):
     content = Column(String, nullable=False)
     market = Column(String, nullable=False, default="austin")
     post_type = Column(String, default="user") # 'user', 'mic_listed', 'mic_started', 'mic_ended'
+    likes_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     author = relationship("User")
