@@ -26,8 +26,8 @@ export default function App() {
     <Router>
       <AuthProvider>
         <MicProvider>
-          {/* Main App Container - Facebook Dark Theme Base */}
-          <div className="min-h-screen bg-[#18191a] text-[#e4e6eb] flex flex-col font-sans selection:bg-[#2d88ff]/30">
+          {/* Main App Container - Bounded Viewport Shell */}
+          <div className="h-screen h-[100dvh] bg-[#18191a] text-[#e4e6eb] flex flex-col font-sans selection:bg-[#2d88ff]/30 overflow-hidden">
             
             {/* Global Persistent Header (Market, Live Stage Icon, Ticket Number) */}
             <Header />
@@ -36,7 +36,7 @@ export default function App() {
             <GlobalAudioGuard />
 
             {/* Main Content Area */}
-            <main className="flex-1 w-full max-w-md mx-auto relative flex flex-col min-h-0 overflow-hidden">
+            <main className="flex-1 min-h-0 w-full max-w-md mx-auto relative flex flex-col overflow-hidden">
               <Routes>
                 {/* Core Navigation Tabs */}
                 <Route path="/" element={<Landing />} />

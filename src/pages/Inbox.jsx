@@ -200,11 +200,11 @@ export default function Inbox() {
   }
 
   return (
-    <div className="flex flex-col h-full animate-fade-in max-w-md mx-auto w-full flex-1 pb-8">
+    <div className="flex flex-col h-full min-h-0 animate-fade-in max-w-md mx-auto w-full flex-1 overflow-hidden">
       
       {!activeThread ? (
         /* --- VIEW 1: THREAD LIST --- */
-        <div className="flex flex-col gap-3 p-3 pt-2">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3 pt-2">
           <div className="flex justify-between items-center px-1 mb-1">
             <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Direct Inbox</h1>
             <button 
@@ -267,7 +267,7 @@ export default function Inbox() {
         </div>
       ) : (
         /* --- VIEW 2: ACTIVE DIRECT THREAD --- */
-        <div className="flex flex-col h-full min-h-0 bg-[#18191a] pb-16">
+        <div className="flex flex-col h-full min-h-0 bg-[#18191a]">
           <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 flex-none shadow-sm z-20">
             <button onClick={() => setActiveThread(null)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
               <i className="fa-solid fa-arrow-left"></i>

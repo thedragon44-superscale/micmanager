@@ -85,7 +85,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[#18191a] font-sans animate-fade-in max-w-md mx-auto w-full pb-16">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] font-sans animate-fade-in max-w-md mx-auto w-full">
       <header className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center justify-between flex-none shadow-sm z-30">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
