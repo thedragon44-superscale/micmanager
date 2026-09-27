@@ -98,9 +98,9 @@ export default function Landing() {
               key={mic.id} 
               className={`bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex flex-col gap-3 ${!isActive ? 'opacity-80' : ''}`}
             >
-              <div className="flex justify-between items-start border-b border-[#3e4042] pb-2.5">
-                <div>
-                  <h3 className="text-lg font-bold text-white font-display tracking-wide">{mic.name}</h3>
+              <div className="flex justify-between items-start border-b border-[#3e4042] pb-2.5 gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-white font-display tracking-wide truncate">{mic.name}</h3>
                   <p className="text-[11px] text-[#b0b3b8] mt-0.5 truncate">
                     <i className="fa-solid fa-location-dot mr-1 text-[#2d88ff]"></i> 
                     {mic.venue} {mic.address && `• ${mic.address}`}
@@ -159,7 +159,10 @@ export default function Landing() {
                     <span>Host: <strong className="text-[#2d88ff] uppercase">{mic.host_name}</strong></span>
                     <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
                   </div>
-                  <span className="text-right max-w-[120px]">Signups open when host clocks in</span>
+                  <div className="flex flex-col text-right">
+                    <span>Sign Up: <strong className="text-white">{mic.signup_time}</strong></span>
+                    <span>Start: <strong className="text-white">{mic.start_time}</strong></span>
+                  </div>
                 </div>
               )}
             </div>
