@@ -13,11 +13,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// Helper component to trigger map camera pans when coordinates change
+// Helper component to trigger map camera pans and recalculate flex layout bounds
 function MapUpdater({ center }) {
   const map = useMap();
   useEffect(() => {
     map.setView(center, 11, { animate: true });
+    
+    // Forces Leaflet to recalculate container dimensions after flex layout mounts
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [center, map]);
   return null;
 }
@@ -64,8 +71,8 @@ export default function Landing() {
 
       {/* DYNAMIC LOGISTICS RADAR MAP */}
       {!isLoading && todayMics.length > 0 && (
-        <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm flex flex-col">
-          <div className="h-40 relative w-full border-b border-[#3e4042]">
+        <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm flex flex-col flex-none">
+          <div className="h-44 relative w-full border-b border-[#3e4042]">
             <MapContainer 
               center={mapCenter} 
               zoom={11} 
