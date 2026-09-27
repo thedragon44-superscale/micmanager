@@ -929,7 +929,10 @@ def get_user_history(user_id: int, db: Session = Depends(get_db)):
 
 @app.get("/directory", response_model=list[schemas.DirectoryUserResponse])
 def get_scene_directory(market: str = "austin", db: Session = Depends(get_db)):
-    users = db.query(models.User).filter(models.User.home_market == market).order_by(models.User.username.asc()).all()
+    users = db.query(models.User).filter(
+        models.User.home_market == market,
+        models.User.username != "Stage System"
+    ).order_by(models.User.username.asc()).all()
     return users
 
 # --- SOCIAL FEED INTERACTIONS ---
