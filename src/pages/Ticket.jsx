@@ -164,6 +164,27 @@ export default function Ticket() {
 
           {/* Fixed Full-Width Chat Input */}
           <div className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex items-center gap-2 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
+            
+            {/* The + Popover Menu */}
+            {showPlusMenu && (
+              <div className="absolute bottom-14 left-2 w-48 bg-[#242526] border border-[#3e4042] rounded-xl p-1.5 shadow-2xl z-30 animate-fade-in">
+                <div className="text-[9px] font-bold text-[#b0b3b8] uppercase tracking-widest mb-1 px-2 pt-1">Actions</div>
+                <button className="w-full text-left px-2 py-2 text-xs font-bold text-[#2d88ff] hover:bg-gray-700 rounded transition-colors flex items-center gap-2">
+                  <i className="fa-solid fa-right-left w-4"></i> Request Spot Swap
+                </button>
+                <button className="w-full text-left px-2 py-2 text-xs font-bold text-red-400 hover:bg-gray-700 rounded transition-colors flex items-center gap-2 mt-0.5">
+                  <i className="fa-solid fa-user-minus w-4"></i> Drop Out of Lineup
+                </button>
+              </div>
+            )}
+
+            <button 
+              onClick={() => setShowPlusMenu(!showPlusMenu)} 
+              className="w-8 h-8 rounded-full bg-[#18191a] border border-[#3e4042] text-[#b0b3b8] flex items-center justify-center shrink-0 hover:text-white transition-colors"
+            >
+              <i className={`fa-solid ${showPlusMenu ? 'fa-xmark' : 'fa-plus'} text-xs`}></i>
+            </button>
+
             <input 
               type="text" 
               value={chatInput}
