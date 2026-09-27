@@ -19,6 +19,33 @@ load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
+load_dotenv()
+
+models.Base.metadata.create_all(bind=engine)
+
+# Ensure raw SQL social tables exist on startup
+with engine.connect() as conn:
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS feed_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            author_id INTEGER NOT NULL,
+            author_name TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            likes_count INTEGER DEFAULT 0
+        );
+    """))
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS feed_likes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target_type TEXT NOT NULL,
+            target_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL
+        );
+    """))
+    conn.commit()
+
 # Initialize MinIO (S3) Client
 s3_client = boto3.client(
     's3',
