@@ -1,3 +1,4 @@
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 import boto3
 from dotenv import load_dotenv
@@ -28,13 +29,11 @@ s3_client = boto3.client(
 MINIO_BUCKET = os.getenv("MINIO_BUCKET")
 MINIO_AUDIO_BUCKET = os.getenv("MINIO_AUDIO_BUCKET")
 
-# --- GRACE PERIOD SWEEPER (Runs in background) ---
+# --- GRACE PERIOD SWEEPER (Runs in background via APScheduler) ---
 async def check_missed_mics():
-    while True:
-        await asyncio.sleep(60) 
-        db = next(get_db())
-        try:
-            now = datetime.datetime.now()
+    db = next(get_db())
+    try:
+        now = datetime.datetime.now()
             current_date = now.date()
             current_time = now.time()
             
@@ -85,9 +84,15 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
-    task = asyncio.create_task(check_missed_mics())
+    # Initialize and start the background scheduler
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_missed_mics, 'interval', minutes=1)
+    scheduler.start()
+    
     yield
-    task.cancel()
+    
+    # Gracefully shut down the scheduler when the app stops
+    scheduler.shutdown()
 
 # --- INITIALIZE APP ---
 app = FastAPI(title="Austin Mic Manager API", lifespan=lifespan)
