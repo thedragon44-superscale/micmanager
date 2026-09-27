@@ -81,36 +81,6 @@ async def lifespan(app: FastAPI):
             e2 = models.MicEvent(series_id=s2.id, event_date=datetime.date.today(), status="scheduled")
             db.add(e2)
 
-            db.commit()
-            
-        # Dynamically create missing interaction tables for the Feed
-        db.execute(text("""
-            CREATE TABLE IF NOT EXISTS feed_comments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                post_id INTEGER NOT NULL,
-                author_id INTEGER NOT NULL,
-                author_name TEXT NOT NULL,
-                content TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
-                likes_count INTEGER DEFAULT 0
-            )
-        """))
-        db.execute(text("""
-            CREATE TABLE IF NOT EXISTS feed_likes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                target_type TEXT NOT NULL,
-                target_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
-                UNIQUE(target_type, target_id, user_id)
-            )
-        """))
-        
-        try:
-            db.execute(text("ALTER TABLE feed_posts ADD COLUMN likes_count INTEGER DEFAULT 0"))
-            db.execute(text("ALTER TABLE feed_posts ADD COLUMN comments_count INTEGER DEFAULT 0"))
-        except Exception:
-            pass 
-            
         db.commit()
     finally:
         db.close()
