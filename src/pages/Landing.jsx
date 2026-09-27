@@ -19,6 +19,7 @@ export default function Landing() {
   
   const [todayMics, setTodayMics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showRosterModal, setShowRosterModal] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -32,13 +33,6 @@ export default function Landing() {
   const activeQueue = queue.filter(c => c.status !== 'completed' && c.status !== 'dropped');
   const amIOnList = myComicProfile && activeQueue.some(c => c.id === myComicProfile.id);
   const activeMicsCount = todayMics.filter(m => m.status === 'active').length;
-
-  // Smart truncation for the map pins (Removes "The " so "The Creek" becomes "Creek")
-  const formatVenueName = (name) => {
-    if (!name) return 'Venue';
-    const cleanName = name.replace(/^(The\s+)/i, '');
-    return cleanName.split(' ')[0];
-  };
 
   return (
     <div className="flex flex-col gap-3 p-3 pb-24 animate-fade-in max-w-md mx-auto w-full">
@@ -58,10 +52,8 @@ export default function Landing() {
               center={[30.2672, -97.7431]} 
               zoom={13} 
               scrollWheelZoom={false} 
-              /* Tailwind arbitrary variants apply the dark filter ONLY to the map tiles, leaving markers alone */
               className="h-full w-full !z-0 [&_.leaflet-tile-pane]:filter [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-90 [&_.leaflet-tile-pane]:contrast-85"
             >
-              {/* Standard OpenStreetMap - 100% Free, No API Key */}
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; OpenStreetMap'
@@ -147,7 +139,7 @@ export default function Landing() {
 
                   <div className="flex gap-2 pt-1">
                     <button 
-                      onClick={() => navigate('/ticket')} 
+                      onClick={() => setShowRosterModal(true)} 
                       className="flex-1 bg-[#18191a] border border-[#3e4042] text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 font-mono-data transition-colors"
                     >
                       Roster
@@ -169,6 +161,60 @@ export default function Landing() {
             </div>
           );
         })
+      )}
+
+      {/* --- PUBLIC ROSTER MODAL --- */}
+      {showRosterModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col justify-end p-0 sm:p-4 animate-fade-in" onClick={() => setShowRosterModal(false)}>
+          <div className="bg-[#242526] border-x border-t sm:border border-[#3e4042] rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-[#3e4042] shrink-0">
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase font-display tracking-wide">Live Roster</h3>
+                <p className="text-[10px] text-[#b0b3b8] font-mono-data uppercase tracking-widest mt-0.5">Public Viewer</p>
+              </div>
+              <button onClick={() => setShowRosterModal(false)} className="w-8 h-8 rounded-full bg-[#18191a] border border-[#3e4042] text-[#b0b3b8] flex items-center justify-center hover:bg-gray-800 hover:text-white transition-colors">
+                <i className="fa-solid fa-xmark text-sm"></i>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto w-full flex flex-col pb-6">
+              {queue.length === 0 ? (
+                <div className="p-8 text-center text-[#b0b3b8] text-[10px] font-mono-data uppercase tracking-widest">
+                  The list is currently empty.
+                </div>
+              ) : (
+                queue.map((c, index) => {
+                  const isMe = myComicProfile && String(c.id) === String(myComicProfile.id);
+                  const pos = c.position || index + 1;
+                  
+                  let statusBadge = null;
+                  if (c.status === 'on_stage') {
+                    statusBadge = <span className="text-[9px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded font-black uppercase font-mono-data animate-pulse">On Stage</span>;
+                  } else if (c.status === 'on_deck') {
+                    statusBadge = <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-black uppercase font-mono-data">On Deck</span>;
+                  }
+
+                  return (
+                    <div key={c.id} className={`p-3.5 flex justify-between items-center border-b border-[#3e4042] last:border-b-0 ${isMe ? 'bg-[#2d88ff]/10' : c.status === 'on_stage' ? 'bg-red-900/10' : c.status === 'on_deck' ? 'bg-amber-900/10' : 'bg-[#18191a]'}`}>
+                      <div className="flex gap-3 items-center">
+                        <span className={`text-xs font-mono-data w-5 ${c.status === 'completed' ? 'text-[#3e4042]' : 'text-[#b0b3b8]'}`}>
+                          {pos.toString().padStart(2, '0')}
+                        </span>
+                        <span className={`text-sm font-bold ${c.status === 'completed' ? 'text-[#b0b3b8] line-through opacity-60' : c.status === 'on_stage' ? 'text-red-400' : c.status === 'on_deck' ? 'text-amber-400' : 'text-white'}`}>
+                          {c.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {statusBadge}
+                        {isMe && <span className="text-[9px] bg-[#2d88ff] text-white px-2 py-0.5 rounded font-bold uppercase font-mono-data">You</span>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
