@@ -27,55 +27,6 @@ export default function Ticket() {
   }, [activeMic?.id]);
 
   return (
-    <div className="flex flex-col h-full max-w-md mx-auto pb-32">
-      <div className="p-3 pb-0">
-        <button onClick={() => navigate('/')} className="text-[#2d88ff] text-xs font-bold self-start flex items-center gap-1 mb-3 hover:underline">
-          <i className="fa-solid fa-arrow-left"></i> Back to Mics
-        </button>
-        
-        {/* Tab Toggle */}
-        <div className="flex bg-[#242526] border border-[#3e4042] p-1 rounded-xl shrink-0 mb-3">
-          <button onClick={() => setTicketTab('stub')} className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-colors ${ticketTab === 'stub' ? 'bg-[#2d88ff] text-white' : 'text-[#b0b3b8] hover:text-white'}`}>
-            <i className="fa-solid fa-ticket mr-1.5"></i> Ticket #{myPosition < 10 ? `0${myPosition}` : myPosition}
-          </button>
-          <button onClick={() => setTicketTab('chat')} className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-colors relative ${ticketTab === 'chat' ? 'bg-[#2d88ff] text-white' : 'text-[#b0b3b8] hover:text-white'}`}>
-            <i className="fa-solid fa-comments mr-1.5"></i> Mic Chat
-            {hasSwapOffer && <span className="absolute top-2 right-6 w-2 h-2 bg-red-500 rounded-full"></span>}
-          </button>
-        </div>
-      </div>
-
-      {/* --- STUB & LIVE LINEUP TAB --- */}
-      {ticketTab === 'stub' && (
-        <div className="flex flex-col gap-3 px-3">
-          <div className="bg-[#242526] border border-[#2d88ff]/50 rounded-xl p-4 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#2d88ff]/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="flex justify-between items-start border-b border-[#3e4042] pb-3 relative z-10">
-              <div>
-                <span className="text-[9px] font-mono-data uppercase tracking-widest text-[#2d88ff] font-bold block mb-0.5">Live Check-In</span>
-                <h3 className="text-lg font-bold text-white font-display">{activeMic?.name || 'Active Open Mic'}</h3>
-              </div>
-              <span className="text-[10px] font-mono-data font-black text-white bg-[#2d88ff] px-2 py-0.5 rounded uppercase">Ticket</span>
-            </div>
-
-            <div className="my-4 text-center py-4 bg-[#18191a] rounded-xl border border-[#3e4042] relative z-10">
-              <span className="text-[9px] font-mono-data text-[#b0b3b8] uppercase block mb-1">Queue Position</span>
-              <span className="text-6xl font-black font-mono-data text-[#2d88ff] drop-shadow-md">
-                #{myPosition < 10 && myPosition !== '--' ? `0${myPosition}` : myPosition}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-black text-[#b0b3b8] uppercase tracking-widest font-mono-data px-1">Full Live Lineup</span>
-            <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden">
-              {queue.length === 0 ? (
-                <div className="p-4 text-center text-[10px] text-[#b0b3b8] uppercase font-mono-data">Queue is empty or not loaded.</div>
-              ) : (
-                queue.map((c, index) => {
-                  const isMe = String(c.id) === String(myComicProfile?.id);
-                  const pos = c.position || index + 1;
-                  return (
     <div className="flex flex-col h-full w-full max-w-md mx-auto bg-[#18191a] pb-24">
       {/* HEADER & TABS */}
       <div className="p-3 pb-0 w-full shrink-0">
