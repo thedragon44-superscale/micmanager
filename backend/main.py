@@ -314,8 +314,12 @@ If you run a room, this app gives you god-mode over your list.
 
 @app.post("/users/register", response_model=schemas.UserResponse)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    account_username = user.username or user.name
+    if not account_username:
+        raise HTTPException(status_code=400, detail="Username or name is required")
+
     existing_user = db.query(models.User).filter(
-        (models.User.username == user.username) | (models.User.email == user.email)
+        (models.User.username == account_username) | (models.User.email == user.email)
     ).first()
     
     if existing_user:
@@ -323,7 +327,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         
     hashed_password = auth.get_password_hash(user.password)
     db_user = models.User(
-        username=user.username,
+        username=account_username,
         email=user.email,
         hashed_password=hashed_password,
         home_market=user.home_market

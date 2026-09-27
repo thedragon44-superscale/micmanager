@@ -41,7 +41,8 @@ class QueueEntryResponse(BaseModel):
 
 # --- Auth & User Schemas ---
 class UserCreate(BaseModel):
-    username: str
+    username: str | None = None
+    name: str | None = None
     email: str
     password: str
     ig_handle: str | None = None
