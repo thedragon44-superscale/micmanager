@@ -1,4 +1,3 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 import boto3
 from dotenv import load_dotenv
@@ -14,6 +13,7 @@ import datetime
 import asyncio
 import sqlite3
 from contextlib import asynccontextmanager
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
@@ -34,32 +34,32 @@ async def check_missed_mics():
     db = next(get_db())
     try:
         now = datetime.datetime.now()
-            current_date = now.date()
-            current_time = now.time()
-            
-            pending_events = db.query(models.MicEvent).join(models.MicSeries).filter(
-                models.MicEvent.event_date == current_date,
-                models.MicEvent.status == "scheduled",
-                models.MicSeries.is_archived == False
-            ).all()
+        current_date = now.date()
+        current_time = now.time()
+        
+        pending_events = db.query(models.MicEvent).join(models.MicSeries).filter(
+            models.MicEvent.event_date == current_date,
+            models.MicEvent.status == "scheduled",
+            models.MicSeries.is_archived == False
+        ).all()
 
-            for event in pending_events:
-                start_dt = datetime.datetime.combine(current_date, event.series.start_time)
-                grace_period_end = start_dt + datetime.timedelta(hours=1)
+        for event in pending_events:
+            start_dt = datetime.datetime.combine(current_date, event.series.start_time)
+            grace_period_end = start_dt + datetime.timedelta(hours=1)
 
-                if now > grace_period_end:
-                    event.status = "missed"
-                    event.series.consecutive_misses += 1
-                    
-                    if event.series.consecutive_misses >= 4:
-                        event.series.is_archived = True
-                        print(f"ARCHIVED: {event.series.name} due to 4 consecutive misses.")
-            
-            db.commit()
-        except Exception as e:
-            print(f"Sweeper error: {e}")
-        finally:
-            db.close()
+            if now > grace_period_end:
+                event.status = "missed"
+                event.series.consecutive_misses += 1
+                
+                if event.series.consecutive_misses >= 4:
+                    event.series.is_archived = True
+                    print(f"ARCHIVED: {event.series.name} due to 4 consecutive misses.")
+        
+        db.commit()
+    except Exception as e:
+        print(f"Sweeper error: {e}")
+    finally:
+        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -80,7 +80,8 @@ async def lifespan(app: FastAPI):
             e2 = models.MicEvent(series_id=s2.id, event_date=datetime.date.today(), status="scheduled")
             db.add(e2)
 
-        db.commit()
+            db.commit()
+            
     finally:
         db.close()
 
