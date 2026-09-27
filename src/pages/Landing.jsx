@@ -19,7 +19,6 @@ export default function Landing() {
   
   const [todayMics, setTodayMics] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showRosterModal, setShowRosterModal] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -148,7 +147,7 @@ export default function Landing() {
 
                   <div className="flex gap-2 pt-1">
                     <button 
-                      onClick={() => setShowRosterModal(true)} 
+                      onClick={() => navigate('/ticket')} 
                       className="flex-1 bg-[#18191a] border border-[#3e4042] text-white py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 font-mono-data transition-colors"
                     >
                       Roster
