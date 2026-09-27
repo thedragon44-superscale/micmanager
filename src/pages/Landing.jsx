@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMic } from '../MicContext';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -12,6 +12,15 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+
+// Helper component to trigger map camera pans when coordinates change
+function MapUpdater({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, 11, { animate: true });
+  }, [center, map]);
+  return null;
+}
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -34,6 +43,15 @@ export default function Landing() {
   const amIOnList = myComicProfile && activeQueue.some(c => c.id === myComicProfile.id);
   const activeMicsCount = todayMics.filter(m => m.status === 'active').length;
 
+  // Calculate dynamic center based on active market's mic locations
+  const validMics = todayMics.filter(m => m.lat && m.lng);
+  const mapCenter = validMics.length > 0 
+    ? [
+        validMics.reduce((sum, m) => sum + m.lat, 0) / validMics.length,
+        validMics.reduce((sum, m) => sum + m.lng, 0) / validMics.length
+      ]
+    : [30.2672, -97.7431]; // Default fallback
+
   return (
     <div className="flex flex-col gap-3 p-3 pb-24 animate-fade-in max-w-md mx-auto w-full">
       
@@ -49,11 +67,12 @@ export default function Landing() {
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm flex flex-col">
           <div className="h-40 relative w-full border-b border-[#3e4042]">
             <MapContainer 
-              center={[30.2672, -97.7431]} 
-              zoom={13} 
+              center={mapCenter} 
+              zoom={11} 
               scrollWheelZoom={false} 
               className="h-full w-full !z-0 [&_.leaflet-tile-pane]:filter [&_.leaflet-tile-pane]:invert [&_.leaflet-tile-pane]:hue-rotate-180 [&_.leaflet-tile-pane]:brightness-90 [&_.leaflet-tile-pane]:contrast-85"
             >
+              <MapUpdater center={mapCenter} />
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; OpenStreetMap'
