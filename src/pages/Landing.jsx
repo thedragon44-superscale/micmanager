@@ -165,9 +165,9 @@ export default function Landing() {
 
       {/* --- PUBLIC ROSTER MODAL --- */}
       {showRosterModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col justify-end p-0 sm:p-4 animate-fade-in" onClick={() => setShowRosterModal(false)}>
-          <div className="bg-[#242526] border-x border-t sm:border border-[#3e4042] rounded-t-2xl sm:rounded-2xl w-full max-w-md mx-auto h-[80vh] flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b border-[#3e4042] shrink-0">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 pb-20 animate-fade-in" onClick={() => setShowRosterModal(false)}>
+          <div className="bg-[#242526] border border-[#3e4042] rounded-2xl w-full max-w-sm mx-auto max-h-[70vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b border-[#3e4042] shrink-0 bg-[#242526]">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase font-display tracking-wide">Live Roster</h3>
                 <p className="text-[10px] text-[#b0b3b8] font-mono-data uppercase tracking-widest mt-0.5">Public Viewer</p>
@@ -177,7 +177,7 @@ export default function Landing() {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto w-full flex flex-col pb-6">
+            <div className="flex-1 overflow-y-auto w-full flex flex-col bg-[#18191a]">
               {queue.length === 0 ? (
                 <div className="p-8 text-center text-[#b0b3b8] text-[10px] font-mono-data uppercase tracking-widest">
                   The list is currently empty.
