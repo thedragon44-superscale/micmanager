@@ -121,6 +121,7 @@ export default function Landing() {
                 <>
                   <div className="flex justify-between items-center">
                     <div className="flex flex-col text-[11px] font-mono-data text-[#b0b3b8]">
+                      <span>Host: <strong className="text-[#2d88ff] uppercase">{mic.host_name}</strong></span>
                       <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
                       <span>Sign Up: <strong className="text-white">{mic.signup_time}</strong> • Start: <strong className="text-white">{mic.start_time}</strong></span>
                     </div>
@@ -154,8 +155,11 @@ export default function Landing() {
                 </>
               ) : (
                 <div className="flex justify-between items-center text-[11px] font-mono-data text-[#b0b3b8]">
-                  <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
-                  <span>Signups open when host clocks in</span>
+                  <div className="flex flex-col">
+                    <span>Host: <strong className="text-[#2d88ff] uppercase">{mic.host_name}</strong></span>
+                    <span>Day: <strong className="text-white">{mic.day_of_week}</strong></span>
+                  </div>
+                  <span className="text-right max-w-[120px]">Signups open when host clocks in</span>
                 </div>
               )}
             </div>

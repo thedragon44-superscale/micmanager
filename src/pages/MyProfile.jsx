@@ -240,7 +240,7 @@ export default function MyProfile() {
             <span className="text-[9px] text-[#b0b3b8] uppercase block">Vault</span>
           </div>
           <div className="text-center">
-            <span className="text-base font-bold text-amber-400 block">{profileData?.badges?.length || 1}</span>
+            <span className="text-base font-bold text-amber-400 block">{profileData?.badges?.length || 0}</span>
             <span className="text-[9px] text-[#b0b3b8] uppercase block">Badges</span>
           </div>
         </div>
@@ -269,27 +269,25 @@ export default function MyProfile() {
           Earned Achievements
         </h3>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <div className="bg-[#242526] border border-[#3e4042] p-2.5 rounded-xl flex items-center gap-2.5 min-w-[160px] shrink-0">
-            <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-amber-400 text-[10px] shrink-0">
-              <i className="fa-solid fa-microphone"></i>
-            </div>
-            <div>
-              <h4 className="text-[10px] font-bold text-white uppercase font-mono-data">First Mic</h4>
-              <p className="text-[9px] text-[#b0b3b8] font-mono-data">Hit the stage</p>
-            </div>
-          </div>
-
-          {profileData?.badges?.map((badge, idx) => (
-            <div key={idx} className="bg-[#242526] border border-[#3e4042] p-2.5 rounded-xl flex items-center gap-2.5 min-w-[160px] shrink-0">
-              <div className="w-7 h-7 rounded-full bg-[#2d88ff]/10 border border-[#2d88ff]/40 flex items-center justify-center text-[#2d88ff] text-[10px] shrink-0">
-                <i className="fa-solid fa-award"></i>
+          {!profileData?.badges || profileData.badges.length === 0 ? (
+             <div className="w-full text-center text-[#b0b3b8] py-4 font-mono-data text-[10px] uppercase border border-[#3e4042] rounded-lg bg-[#18191a]">
+               No badges unlocked yet.
+             </div>
+          ) : (
+            profileData.badges.map((badge, idx) => (
+              <div key={idx} className="bg-[#242526] border border-[#3e4042] p-2.5 rounded-xl flex items-center gap-2.5 min-w-[160px] shrink-0">
+                <div className="w-7 h-7 rounded-full bg-[#2d88ff]/10 border border-[#2d88ff]/40 flex items-center justify-center text-[#2d88ff] text-[10px] shrink-0">
+                  <i className="fa-solid fa-award"></i>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-white uppercase font-mono-data truncate max-w-[100px]">
+                    {typeof badge === 'string' ? badge : badge.title || 'Badge'}
+                  </h4>
+                  <p className="text-[9px] text-[#b0b3b8] font-mono-data truncate max-w-[100px]">Peer Reviewed</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-[10px] font-bold text-white uppercase font-mono-data truncate max-w-[100px]">{badge.title || 'Badge'}</h4>
-                <p className="text-[9px] text-[#b0b3b8] font-mono-data truncate max-w-[100px]">{badge.desc || 'Unlocked'}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

@@ -36,7 +36,9 @@ class MicSeries(Base):
     market = Column(String, nullable=False, default="austin")
     host_pin = Column(String)
     day_of_week = Column(Integer)  
+    signup_time = Column(Time, nullable=True) # NEW
     start_time = Column(Time)      
+    host_name = Column(String, nullable=True) # NEW
     default_stage_time = Column(Integer, default=5)
     
     consecutive_misses = Column(Integer, default=0)

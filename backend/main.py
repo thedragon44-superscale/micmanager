@@ -186,18 +186,25 @@ def autocomplete_venues(query: str = Query("", alias="query"), market: str = "au
 def get_todays_events(market: str = "austin", db: Session = Depends(get_db)):
     events = db.query(models.MicEvent).join(models.MicSeries).filter(models.MicSeries.market == market).all()
     result = []
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    
     for event in events:
-            series = db.query(models.MicSeries).filter(models.MicSeries.id == event.series_id).first()
+        series = db.query(models.MicSeries).filter(models.MicSeries.id == event.series_id).first()
+        if series:
             result.append({
                 "id": event.id,
                 "series_id": event.series_id,
-                "name": series.name if series else "Unknown Mic",
-                "venue": series.venue if series else "",
-                "address": series.address if series else None,
-                "lat": series.lat if series else None,
-                "lng": series.lng if series else None,
+                "name": series.name,
+                "venue": series.venue,
+                "address": series.address,
+                "lat": series.lat,
+                "lng": series.lng,
                 "status": event.status,
-                "event_date": str(event.event_date)
+                "event_date": str(event.event_date),
+                "day_of_week": days[series.day_of_week] if series.day_of_week is not None else "Unknown",
+                "signup_time": series.signup_time.strftime("%I:%M %p") if series.signup_time else "TBD",
+                "start_time": series.start_time.strftime("%I:%M %p") if series.start_time else "TBD",
+                "host_name": series.host_name or "TBD"
             })
     return result
 
