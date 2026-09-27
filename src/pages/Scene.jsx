@@ -85,12 +85,12 @@ export default function Scene() {
   });
 
   return (
-    <div className="flex flex-col h-full animate-fade-in max-w-md mx-auto pb-24 w-full">
-      <div className="pt-4 px-4 pb-1 bg-[#18191a]">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3 pb-6 animate-fade-in max-w-md mx-auto w-full">
+      <div className="pt-1 px-1 pb-1 bg-[#18191a]">
         <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">The Scene</h1>
       </div>
       
-      <div className="sticky top-[60px] bg-[#18191a]/95 backdrop-blur-md border-b border-[#3e4042] z-30 px-4 py-2.5 flex gap-4">
+      <div className="sticky top-0 bg-[#18191a]/95 backdrop-blur-md border-b border-[#3e4042] z-30 px-1 py-2.5 flex gap-4">
         <button 
           onClick={() => setSceneTab('feed')} 
           className={`text-xs font-black uppercase tracking-widest font-mono-data pb-1 border-b-2 transition-colors ${sceneTab === 'feed' ? 'border-[#2d88ff] text-[#2d88ff]' : 'border-transparent text-[#b0b3b8] hover:text-[#e4e6eb]'}`}
@@ -234,30 +234,4 @@ export default function Scene() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

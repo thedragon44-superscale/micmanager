@@ -46,7 +46,7 @@ export default function HostDashboard() {
   };
 
   return (
-    <div className="p-3 flex flex-col gap-3 animate-fade-in flex-1 max-w-md mx-auto w-full pb-24">
+    <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3 animate-fade-in max-w-md mx-auto w-full pb-6">
       
       {/* HEADER */}
       <div className="pt-2 px-1">

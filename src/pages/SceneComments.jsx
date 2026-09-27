@@ -128,9 +128,9 @@ export default function SceneComments() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#18191a] max-w-md mx-auto w-full pb-32">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full">
       
-      <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 sticky top-[60px] z-20 shadow-sm">
+      <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 flex-none z-20 shadow-sm">
         <button onClick={() => navigate('/scene')} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
           <i className="fa-solid fa-arrow-left"></i>
         </button>
@@ -139,7 +139,7 @@ export default function SceneComments() {
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {/* PARENT POST */}
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -221,7 +221,7 @@ export default function SceneComments() {
       </div>
 
       {/* INPUT FOOTER */}
-      <div className="bg-[#242526] border-t border-[#3e4042] p-2.5 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
+      <div className="bg-[#242526] border-t border-[#3e4042] p-2.5 flex-none w-full max-w-md mx-auto z-20 shadow-lg">
         <form onSubmit={handlePostComment} className="flex gap-2 items-center relative">
           <input 
             type="text" 

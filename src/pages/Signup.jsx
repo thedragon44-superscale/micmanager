@@ -25,7 +25,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex flex-col p-3 gap-3 pb-24 animate-fade-in max-w-md mx-auto w-full">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col p-3 gap-3 pb-6 animate-fade-in max-w-md mx-auto w-full">
       <button onClick={() => navigate('/')} className="text-[#2d88ff] text-xs font-bold self-start flex items-center gap-1 hover:underline">
         <i className="fa-solid fa-arrow-left"></i> Cancel
       </button>

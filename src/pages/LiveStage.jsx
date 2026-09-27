@@ -129,7 +129,7 @@ export default function LiveStage() {
   }
 
   return (
-    <div className="p-3 flex flex-col animate-fade-in max-w-md mx-auto w-full pb-24">
+    <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col animate-fade-in max-w-md mx-auto w-full pb-6">
       
       <button onClick={() => navigate('/host')} className="text-[#2d88ff] text-xs font-bold self-start flex items-center gap-1 mb-3 hover:underline">
         <i className="fa-solid fa-arrow-left"></i> Exit Controls

@@ -27,7 +27,7 @@ export default function Ticket() {
   }, [activeMic?.id]);
 
   return (
-    <div className="flex flex-col h-full w-full max-w-md mx-auto bg-[#18191a] pb-24">
+    <div className="flex flex-col h-full min-h-0 w-full max-w-md mx-auto bg-[#18191a]">
       {/* HEADER & TABS */}
       <div className="p-3 pb-0 w-full shrink-0">
         <button onClick={() => navigate('/')} className="text-[#2d88ff] text-xs font-bold self-start flex items-center gap-1 mb-3 hover:underline">
@@ -47,7 +47,7 @@ export default function Ticket() {
 
       {/* --- STUB & LIVE LINEUP TAB --- */}
       {ticketTab === 'stub' && (
-        <div className="flex flex-col w-full animate-fade-in">
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col w-full animate-fade-in pb-6">
           
           {/* TICKET CARD */}
           <div className="px-3 mb-4 w-full">
@@ -117,9 +117,9 @@ export default function Ticket() {
 
       {/* --- MIC CHAT TAB --- */}
       {ticketTab === 'chat' && (
-        <div className="flex flex-col flex-1 w-full animate-fade-in relative h-full">
+        <div className="flex flex-col flex-1 min-h-0 w-full animate-fade-in">
           {/* Flush Chat Header */}
-          <div className="bg-[#242526] border-y border-[#3e4042] p-3 flex justify-between items-center shrink-0 w-full shadow-sm">
+          <div className="bg-[#242526] border-y border-[#3e4042] p-3 flex justify-between items-center flex-none w-full shadow-sm">
             <span className="text-xs font-bold text-white uppercase tracking-wider font-mono-data">
               <i className="fa-solid fa-tower-broadcast text-[#2d88ff] mr-1.5 animate-pulse"></i> Event Chat
             </span>
@@ -128,7 +128,7 @@ export default function Ticket() {
             </span>
           </div>
 
-          <div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3 pb-32 w-full">
+          <div className="flex-1 min-h-0 p-3 overflow-y-auto flex flex-col gap-3 w-full">
             {chatMessages.length === 0 ? (
               <div className="text-center text-[#b0b3b8] py-20 font-mono-data text-[10px] uppercase tracking-widest">
                 Room is quiet. No messages yet.
@@ -163,7 +163,7 @@ export default function Ticket() {
           </div>
 
           {/* Fixed Full-Width Chat Input */}
-          <div className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex items-center gap-2 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
+          <div className="p-2.5 bg-[#242526] border-t border-[#3e4042] flex-none flex items-center gap-2 relative w-full max-w-md mx-auto z-20 shadow-lg">
             
             {/* The + Popover Menu */}
             {showPlusMenu && (

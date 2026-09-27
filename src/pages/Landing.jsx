@@ -53,7 +53,7 @@ export default function Landing() {
     : [30.2672, -97.7431]; // Default fallback
 
   return (
-    <div className="flex flex-col gap-3 p-3 pb-24 animate-fade-in max-w-md mx-auto w-full">
+    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3 pb-6 animate-fade-in max-w-md mx-auto w-full">
       
       <div className="flex justify-between items-center px-1 pt-1">
         <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Tonight's Mics</h1>
