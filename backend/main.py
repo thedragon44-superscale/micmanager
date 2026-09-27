@@ -281,6 +281,37 @@ def create_series(series: schemas.MicSeriesCreate, db: Session = Depends(get_db)
 
 
 # --- AUTHENTICATION & PROFILES ---
+
+WELCOME_GUIDE = """## Welcome to Open Mic Manager
+Built for comics, hosts, and the local scene. This app replaces messy Facebook groups, chaotic paper lists, and scattered group chats with a single, real-time hub. Here is everything you can do right now.
+
+### 📍 The Radar & Virtual Rooms
+The home screen is your logistics hub, replacing the clipboard so you never have to shoulder-tap a host again.
+* **Dynamic Radar:** A live map that automatically centers on your active city to show exactly where mics are located.
+* **No More Ghost Mics:** The system actively monitors showrunner activity. If a mic goes four consecutive weeks without a host clocking in, it is automatically purged from the board to keep the directory strictly accurate.
+* **Live Roster Preview:** Tap "Roster" on any active mic to see exactly who is on the list, on stage, or on deck in real-time.
+* **Instant Sign-Up & Tickets:** When the host clocks in, the list opens. Tap to secure your spot. Your button changes to "My Ticket" as absolute proof of placement.
+* **Stage Notifications:** The app tracks your exact status and sends alerts when you are bumped to "On Deck" so you never miss a cue.
+* **Live Mic Chat:** Every active mic features a dedicated real-time chatroom. Coordinate parking, ask if the list is capped, or talk with the back of the room without blowing up group texts.
+
+### 🎙️ Set Tracking & The Audio Vault
+Stop asking the host to hit record on your phone before you walk up.
+* **Auto-Recorded Sets:** When a host marks you as "On Stage," the app automatically handles the audio capture for your set.
+* **Personal Logbook:** Every mic you perform at through the app is permanently tracked on your profile. You get a perfect, searchable archive of your stage time, complete with the attached audio files, so you can review your material and visually track your grind over time.
+
+### 🎭 The Scene & Direct Networking
+Comedy is a community. This is your local watercooler and rolodex.
+* **The Feed:** Drop text posts, hype up a great room, or talk trash. Every post supports likes and deep-linked comment threads.
+* **The Directory:** A complete, searchable roster of every registered comic in your market. 
+* **1-on-1 Messaging:** Hit the "Message" button on any comic's profile to instantly spin up a private chat thread in your Direct Inbox.
+* **Cross-Market Browsing:** Traveling? Switch your active market at the top of the screen, and the Feed, Directory, and Map will instantly swap to that city's local scene.
+
+### 🎤 Host Controls (For Showrunners)
+If you run a room, this app gives you god-mode over your list.
+* **Clocking In:** You strictly control when the list opens. The public cannot sign up until you flip the switch.
+* **Queue Management:** Seamlessly move comics around, bump them up, or drop them if they no-show.
+* **Live Status Updates:** Mark comics as "On Deck" or "On Stage" to instantly push updates to the public Roster Modal so the whole room knows exactly who is up next."""
+
 @app.post("/users/register", response_model=schemas.UserResponse)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter(
@@ -300,6 +331,21 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    # --- INJECT SYSTEM WELCOME MESSAGE ---
+    system_bot = db.query(models.User).filter(models.User.username == "Stage System").first()
+    
+    if system_bot:
+        welcome_message = models.DirectMessage(
+            sender_id=system_bot.id,
+            recipient_id=db_user.id,
+            content=WELCOME_GUIDE,
+            message_type="text"
+        )
+        db.add(welcome_message)
+        db.commit()
+    # --------------------------------------
+
     return db_user
 
 @app.post("/users/login", response_model=schemas.Token)
