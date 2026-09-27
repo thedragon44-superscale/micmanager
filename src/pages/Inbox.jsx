@@ -204,7 +204,7 @@ export default function Inbox() {
       
       {!activeThread ? (
         /* --- VIEW 1: THREAD LIST --- */
-        <div className="flex flex-col gap-3 p-3 pt-4">
+        <div className="flex flex-col gap-3 p-3 pt-2">
           <div className="flex justify-between items-center px-1 mb-1">
             <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Direct Inbox</h1>
             <button 
@@ -267,8 +267,8 @@ export default function Inbox() {
         </div>
       ) : (
         /* --- VIEW 2: ACTIVE DIRECT THREAD --- */
-        <div className="flex flex-col h-full bg-[#18191a] pb-32">
-          <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 shrink-0 shadow-sm sticky top-[60px] z-20">
+        <div className="flex flex-col h-full min-h-0 bg-[#18191a] pb-16">
+          <div className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center gap-3 flex-none shadow-sm z-20">
             <button onClick={() => setActiveThread(null)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
               <i className="fa-solid fa-arrow-left"></i>
             </button>
@@ -277,7 +277,7 @@ export default function Inbox() {
             </h3>
           </div>
           
-          <div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+          <div className="flex-1 min-h-0 p-3 overflow-y-auto flex flex-col gap-3">
             {messages.length === 0 ? (
               <div className="text-center text-[#b0b3b8] py-20 font-mono-data text-xs uppercase">
                 No conversation history yet. Say hello!
@@ -293,10 +293,10 @@ export default function Inbox() {
                       <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider block mb-1">
                         <i className="fa-solid fa-circle-check mr-1"></i> Stage System
                       </span>
-                      <p className="text-xs text-amber-100 font-medium leading-relaxed">
+                      <p className="text-xs text-amber-100 font-medium leading-relaxed text-left whitespace-pre-wrap">
                         {msg.content}
                       </p>
-                      <span className="text-[9px] font-mono-data text-amber-500/50 block mt-2">
+                      <span className="text-[9px] font-mono-data text-amber-500/50 block mt-2 text-right">
                         {msg.timestamp}
                       </span>
                     </div>
@@ -320,12 +320,12 @@ export default function Inbox() {
                 );
               })
             )}
-            <div ref={chatEndRef} className="h-6 shrink-0" />
+            <div ref={chatEndRef} className="h-2 shrink-0" />
           </div>
 
           {/* Chat Input Bar */}
           {!activeThread.is_system ? (
-            <form onSubmit={handleSendMessage} className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 flex gap-2 fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
+            <form onSubmit={handleSendMessage} className="p-2.5 bg-[#242526] border-t border-[#3e4042] flex-none flex gap-2 w-full max-w-md mx-auto z-20 shadow-lg">
               <input
                 type="text"
                 value={newMessageText}
@@ -342,7 +342,7 @@ export default function Inbox() {
               </button>
             </form>
           ) : (
-            <div className="p-3 bg-[#242526] border-t border-[#3e4042] text-center fixed bottom-[64px] left-0 right-0 w-full max-w-md mx-auto z-20 shadow-lg">
+            <div className="p-3 bg-[#242526] border-t border-[#3e4042] text-center flex-none w-full max-w-md mx-auto z-20 shadow-lg">
               <span className="text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-wider">
                 System notifications are read-only
               </span>

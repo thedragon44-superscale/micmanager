@@ -85,8 +85,8 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#18191a] font-sans animate-fade-in max-w-md mx-auto w-full pb-16">
-      <header className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center justify-between shrink-0 shadow-sm sticky top-[60px] z-30">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] font-sans animate-fade-in max-w-md mx-auto w-full pb-16">
+      <header className="bg-[#242526] border-b border-[#3e4042] p-3 flex items-center justify-between flex-none shadow-sm z-30">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="text-[#2d88ff] p-1 hover:text-white transition-colors">
             <i className="fa-solid fa-arrow-left"></i>
@@ -109,7 +109,7 @@ export default function Chat() {
         </div>
       </header>
 
-      <main className="flex-1 p-3 overflow-y-auto space-y-3 bg-[#18191a]">
+      <main className="flex-1 min-h-0 p-3 overflow-y-auto space-y-3 bg-[#18191a]">
         {loading ? (
           <div className="text-center text-[#b0b3b8] py-12 font-mono-data text-[10px] uppercase tracking-widest">
             <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
@@ -137,7 +137,7 @@ export default function Chat() {
         <div ref={messagesEndRef} />
       </main>
 
-      <footer className="p-2.5 bg-[#242526] border-t border-[#3e4042] shrink-0 fixed bottom-[64px] left-0 w-full z-20">
+      <footer className="p-2.5 bg-[#242526] border-t border-[#3e4042] flex-none z-20">
         <form onSubmit={sendMessage} className="flex gap-2 max-w-md mx-auto items-center">
           <input
             type="text"

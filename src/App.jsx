@@ -36,7 +36,7 @@ export default function App() {
             <GlobalAudioGuard />
 
             {/* Main Content Area */}
-            <main className="flex-1 w-full max-w-md mx-auto relative flex flex-col">
+            <main className="flex-1 w-full max-w-md mx-auto relative flex flex-col min-h-0 overflow-hidden">
               <Routes>
                 {/* Core Navigation Tabs */}
                 <Route path="/" element={<Landing />} />
