@@ -27,7 +27,7 @@ export default function App() {
       <AuthProvider>
         <MicProvider>
           {/* Main App Container - Bounded Viewport Shell */}
-          <div className="h-screen h-[100dvh] bg-[#18191a] text-[#e4e6eb] flex flex-col font-sans selection:bg-[#2d88ff]/30 overflow-hidden">
+          <div className="fixed inset-0 bg-[#18191a] text-[#e4e6eb] flex flex-col font-sans selection:bg-[#2d88ff]/30 overflow-hidden overscroll-none">
             
             {/* Global Persistent Header (Market, Live Stage Icon, Ticket Number) */}
             <Header />

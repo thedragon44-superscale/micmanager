@@ -200,7 +200,7 @@ export default function Inbox() {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full animate-fade-in">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full animate-fade-in overscroll-none">
       
       {!activeThread ? (
         /* --- VIEW 1: THREAD LIST --- */
@@ -229,7 +229,7 @@ export default function Inbox() {
           </div>
 
           {/* SCROLLABLE THREAD LIST CONTAINER */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-1">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 pt-1">
             <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm">
             {isLoading ? (
               <div className="text-center py-12 text-[#b0b3b8] font-mono-data text-xs uppercase">

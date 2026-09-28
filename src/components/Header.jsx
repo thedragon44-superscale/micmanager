@@ -35,7 +35,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full max-w-md mx-auto px-4 py-3.5 bg-[#242526] border-b border-[#3e4042] flex justify-between items-center shadow-sm shrink-0">
+      <header className="flex-none z-40 w-full max-w-md mx-auto px-4 py-3.5 bg-[#242526] border-b border-[#3e4042] flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2.5">
           <Link to="/" className="text-lg font-black tracking-tighter text-white font-display">
             MIC<span className="text-[#2d88ff]">MGR</span>
