@@ -16,6 +16,48 @@ export default function Scene() {
   const [isLoadingDirectory, setIsLoadingDirectory] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
+  // New Post State
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
+
+  const handleCreatePost = async () => {
+    if (!myComicProfile?.id) {
+      toast.error("You must be logged in to post.");
+      return;
+    }
+    if (!newPostContent.trim()) return;
+
+    setIsPosting(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/feed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          author_id: myComicProfile.id,
+          author_name: myComicProfile.name,
+          content: newPostContent.trim(),
+          market: market
+        })
+      });
+
+      if (res.ok) {
+        const createdPost = await res.json();
+        toast.success("Post published!");
+        setNewPostContent('');
+        // Add new post to top of feed immediately
+        const newPostObj = createdPost.post || createdPost;
+        setFeed(prev => [newPostObj, ...prev]);
+      } else {
+        toast.error("Failed to publish post.");
+      }
+    } catch (err) {
+      console.error("Error creating post:", err);
+      toast.error("Network error while publishing post.");
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   useEffect(() => {
     setIsLoadingFeed(true);
     fetch(`${import.meta.env.VITE_API_URL}/feed?market=${market}`)
@@ -104,9 +146,47 @@ export default function Scene() {
       </div>
 
       {/* SCROLLABLE FEED & DIRECTORY CONTAINER */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-3 pb-16">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 pb-16">
         {sceneTab === 'feed' && (
           <div className="flex flex-col gap-3">
+            
+            {/* USER POST CREATION BOX */}
+            <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-3 shadow-sm flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center font-bold text-[#2d88ff] text-xs shrink-0">
+                  {(myComicProfile?.name || 'C').charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs font-bold text-white font-mono-data">
+                  {myComicProfile ? myComicProfile.name : 'Guest Comic'}
+                </span>
+              </div>
+
+              <textarea
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder={myComicProfile ? "Share an update, set recap, or stage announcement..." : "Sign in to post updates..."}
+                disabled={!myComicProfile || isPosting}
+                rows={2}
+                className="w-full bg-[#18191a] border border-[#3e4042] rounded-lg p-2.5 text-xs text-white placeholder-[#b0b3b8] focus:outline-none focus:border-[#2d88ff] resize-none font-sans"
+              />
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleCreatePost}
+                  disabled={!myComicProfile || !newPostContent.trim() || isPosting}
+                  className="bg-[#2d88ff] hover:bg-[#1b74e4] disabled:opacity-40 text-white font-bold px-3.5 py-1.5 rounded-lg text-[10px] font-mono-data uppercase tracking-wider transition-colors flex items-center gap-1.5"
+                >
+                  {isPosting ? (
+                    <i className="fa-solid fa-spinner animate-spin"></i>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-paper-plane text-[9px]"></i> Post
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
             {isLoadingFeed ? (
               <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
                 <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
