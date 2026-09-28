@@ -12,7 +12,7 @@ export default function BottomNav({ unreadCount = 0 }) {
   ];
 
   return (
-    <nav className="flex-none w-full bg-[#242526] border-t border-[#3e4042] z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.2)]">
+    <nav className="fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto bg-[#242526] border-t border-[#3e4042] z-50 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.2)]">
       <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
         {navItems.map((item) => {
           // Smart Active State Routing: Keeps parent tab highlighted when inside child routes
