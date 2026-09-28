@@ -29,15 +29,23 @@ export default function Inbox() {
       .catch(err => console.error('Directory fetch error:', err));
   }, [market]);
 
-  // Fetch Inbox Threads
+  // Fetch Inbox Threads & Prevent State Leakage Between Accounts
   useEffect(() => {
-    if (!myComicProfile?.id) return;
+    // Immediately clear previous user's chat state
+    setActiveThread(null);
+    setMessages([]);
+
+    if (!myComicProfile?.id) {
+      setThreads([]);
+      return;
+    }
+
+    setIsLoading(true);
 
     fetch(`${import.meta.env.VITE_API_URL}/users/${myComicProfile.id}/inbox`)
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         if (!data || data.length === 0) {
-          // Keep your system default fallback
           const systemDefault = [{
             id: 'sys-welcome',
             partner_id: 'system',
@@ -52,7 +60,7 @@ export default function Inbox() {
           setThreads(data.map(user => ({
             id: `thread-${user.id}`,
             partner_id: user.id,
-            partner_name: user.username,
+            partner_name: user.username || user.name,
             avatar_url: user.avatar_url,
             is_system: false,
             last_message: 'Tap to view conversation',

@@ -55,9 +55,10 @@ export default function MyProfile() {
       ? ['/login', '/users/login', '/auth/login'] 
       : ['/register', '/users/register', '/auth/register'];
 
+    // Send both username and name to guarantee backend alias compatibility
     const payload = authMode === 'login' 
       ? { username: authUsername.trim(), password: authPassword }
-      : { name: authUsername.trim(), email: authEmail.trim(), password: authPassword };
+      : { username: authUsername.trim(), name: authUsername.trim(), email: authEmail.trim(), password: authPassword };
 
     let authResponse = null;
     let authSuccess = false;
@@ -76,14 +77,15 @@ export default function MyProfile() {
           break;
         }
       } catch (err) {
-        // Fallback iteration
+        // Continue fallback loop
       }
     }
 
     if (authSuccess && authResponse) {
+      const newUserId = (authResponse.user?.id || authResponse.id || authResponse.comic_id).toString();
       const userProfile = {
-        id: (authResponse.user?.id || authResponse.id || authResponse.comic_id || '1').toString(),
-        name: authResponse.user?.name || authResponse.name || authUsername.trim(),
+        id: newUserId,
+        name: authResponse.user?.name || authResponse.user?.username || authResponse.name || authUsername.trim(),
         email: authResponse.user?.email || authEmail.trim(),
         token: authResponse.access_token || null
       };
@@ -91,13 +93,8 @@ export default function MyProfile() {
       setMyComicProfile(userProfile);
       toast.success(authMode === 'login' ? `Welcome back, ${userProfile.name}!` : "Account created successfully!");
     } else {
-      const activeProfile = {
-        id: '1',
-        name: authUsername.trim() || 'austin_host',
-        email: authEmail.trim() || ''
-      };
-      setMyComicProfile(activeProfile);
-      toast.success(`Logged in as ${activeProfile.name}`);
+      // Never fall back to Account 1 automatically
+      toast.error(authMode === 'login' ? "Login failed. Please check credentials." : "Registration failed. Username or email may already be taken.");
     }
 
     setAuthUsername('');
