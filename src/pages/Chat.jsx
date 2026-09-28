@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import { useMic } from '../MicContext';
 import toast from 'react-hot-toast';
 
 export default function Chat() {
   const { recipientId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { myComicProfile } = useMic();
   
   const [messages, setMessages] = useState([]);
   const [recipient, setRecipient] = useState(null);
@@ -14,10 +16,10 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
-  const authUserId = user?.user_id || user?.id;
+  const authUserId = myComicProfile?.id || user?.user_id || user?.id;
 
   useEffect(() => {
-    if (!user) {
+    if (!myComicProfile && !user) {
       navigate('/profile');
       return;
     }
