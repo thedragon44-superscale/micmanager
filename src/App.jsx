@@ -49,7 +49,7 @@ export default function App() {
                 <Route path="/ticket" element={<Ticket />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/list-mic" element={<ListMic />} />
-                <Route path="/chat" element={<Chat />} />
+                <Route path="/chat/:recipientId" element={<Chat />} />
                 <Route path="/stage" element={<LiveStage />} />
                 
                 {/* Scene Comments Thread Route */}

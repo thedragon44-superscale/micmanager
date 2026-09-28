@@ -64,7 +64,7 @@ export default function ProfileCard({ userId, currentUserId, onClose }) {
 
   const handleMessageClick = () => {
     if (onClose) onClose();
-    navigate('/inbox', { state: { startChatWith: profile } });
+    navigate(`/chat/${profile?.id || userId}`);
   };
 
   const isOwnProfile = String(userId) === String(currentUserId);
