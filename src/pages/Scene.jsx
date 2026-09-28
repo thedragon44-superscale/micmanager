@@ -43,10 +43,8 @@ export default function Scene() {
       return;
     }
 
-    // 1. Snapshot current state for rollback
     const previousFeed = [...feed];
 
-    // 2. Optimistically update UI
     setFeed(prevFeed => prevFeed.map(post => {
       if (post.id === postId) {
         const isCurrentlyLiked = post.user_liked;
@@ -60,7 +58,6 @@ export default function Scene() {
       return post;
     }));
 
-    // 3. Backend Sync with strict error handling
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/feed/${postId}/like`, { 
         method: 'POST',
@@ -74,7 +71,6 @@ export default function Scene() {
     } catch (err) {
       console.error("Like failed to sync:", err);
       toast.error("Like failed. Post may not support interactions.");
-      // Rollback to previous state if backend rejects the like
       setFeed(previousFeed); 
     }
   };
@@ -111,131 +107,131 @@ export default function Scene() {
       <div className="flex-1 min-h-0 overflow-y-auto p-3 pb-16">
         {sceneTab === 'feed' && (
           <div className="flex flex-col gap-3">
-          {isLoadingFeed ? (
-            <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
-              <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
-              Loading Activity...
-            </div>
-          ) : feed.length === 0 ? (
-            <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest bg-[#242526] border border-[#3e4042] rounded-xl shadow-sm">
-              No recent posts in {market.split('_').join(' ')}.
-            </div>
-          ) : (
-            feed.map((post) => (
-              <div key={post.id} className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  {post.is_system ? (
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-xs shrink-0">
-                        <i className="fa-solid fa-robot"></i>
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-white font-mono-data">System Telemetry</span>
-                        <span className="text-[9px] text-[#b0b3b8] block font-mono-data">{post.timestamp || 'Just now'}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <button onClick={() => setSelectedUserId(post.author_id)} className="flex items-center gap-2.5 text-left group">
-                      <div className="w-8 h-8 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center font-bold text-[#2d88ff] text-xs shrink-0 group-hover:border-[#2d88ff] transition-colors">
-                        {(post.author_name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-white block group-hover:underline">{post.author_name}</span>
-                        <span className="text-[9px] text-[#b0b3b8] block font-mono-data">{post.timestamp}</span>
-                      </div>
-                    </button>
-                  )}
-                  {post.is_system && (
-                    <span className="text-[9px] font-mono-data text-amber-400 bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase">Alert</span>
-                  )}
-                </div>
-                
-                <p className={`text-xs leading-relaxed mt-1 ${post.is_system ? 'text-amber-100 font-mono-data bg-[#18191a] p-2.5 rounded-lg border border-[#3e4042]' : 'text-[#e4e6eb] font-bold'}`}>
-                  {post.content}
-                </p>
-                
-                <div className="flex gap-4 border-t border-[#3e4042] pt-2 mt-1 text-[11px] font-mono-data font-bold text-[#b0b3b8]">
-                  <button 
-                    onClick={() => handleLike(post.id)}
-                    className={`transition-colors flex items-center gap-1 ${post.user_liked ? 'text-[#2d88ff]' : 'hover:text-white'}`}
-                  >
-                    <i className="fa-solid fa-bolt"></i> {post.likes_count || 0} Likes
-                  </button>
-                  <button 
-                    onClick={() => navigate(`/comments/${post.id}`, { state: { post } })} 
-                    className="hover:text-white transition-colors flex items-center gap-1"
-                  >
-                    <i className="fa-solid fa-comment"></i> {post.comments_count || 0} Comments
-                  </button>
-                </div>
+            {isLoadingFeed ? (
+              <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
+                <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
+                Loading Activity...
               </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {sceneTab === 'directory' && (
-        <div className="flex flex-col gap-2.5 p-3">
-          <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#b0b3b8] text-xs"></i>
-            <input 
-              type="text" 
-              placeholder="Search local comics..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#242526] border border-[#3e4042] rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#2d88ff] transition-colors" 
-            />
-          </div>
-
-          {isLoadingDirectory ? (
-            <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
-              <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
-              Loading Comic Database...
-            </div>
-          ) : filteredDirectory.length === 0 ? (
-            <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest bg-[#242526] border border-[#3e4042] rounded-xl shadow-sm">
-              No comics found.
-            </div>
-          ) : (
-            filteredDirectory.map(comic => {
-              const displayName = comic.name || comic.username || 'Comic User';
-              const displayUsername = comic.username || displayName.replace(/\s+/g, '').toLowerCase();
-
-              return (
-                <div 
-                  key={comic.id || comic.user_id} 
-                  onClick={() => setSelectedUserId(comic.id || comic.user_id)} 
-                  className="bg-[#242526] border border-[#3e4042] p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800 transition-colors shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    {comic.avatar_url ? (
-                      <img src={comic.avatar_url} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-[#3e4042] shrink-0" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center font-bold text-[#2d88ff] text-sm shrink-0">
-                        {displayName.charAt(0).toUpperCase()}
+            ) : feed.length === 0 ? (
+              <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest bg-[#242526] border border-[#3e4042] rounded-xl shadow-sm">
+                No recent posts in {market.split('_').join(' ')}.
+              </div>
+            ) : (
+              feed.map((post) => (
+                <div key={post.id} className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    {post.is_system ? (
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 text-xs shrink-0">
+                          <i className="fa-solid fa-robot"></i>
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-white font-mono-data">System Telemetry</span>
+                          <span className="text-[9px] text-[#b0b3b8] block font-mono-data">{post.timestamp || 'Just now'}</span>
+                        </div>
                       </div>
+                    ) : (
+                      <button onClick={() => setSelectedUserId(post.author_id)} className="flex items-center gap-2.5 text-left group">
+                        <div className="w-8 h-8 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center font-bold text-[#2d88ff] text-xs shrink-0 group-hover:border-[#2d88ff] transition-colors">
+                          {(post.author_name || 'U').charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-white block group-hover:underline">{post.author_name}</span>
+                          <span className="text-[9px] text-[#b0b3b8] block font-mono-data">{post.timestamp}</span>
+                        </div>
+                      </button>
                     )}
-                    <div>
-                      <h4 className="text-xs font-bold text-white truncate">{displayName}</h4>
-                      <p className="text-[10px] text-[#b0b3b8] font-mono-data truncate">@{displayUsername}</p>
-                    </div>
+                    {post.is_system && (
+                      <span className="text-[9px] font-mono-data text-amber-400 bg-amber-950/60 border border-amber-500/30 px-1.5 py-0.5 rounded uppercase">Alert</span>
+                    )}
                   </div>
-                  <i className="fa-solid fa-chevron-right text-[#b0b3b8] text-xs shrink-0"></i>
+                  
+                  <p className={`text-xs leading-relaxed mt-1 ${post.is_system ? 'text-amber-100 font-mono-data bg-[#18191a] p-2.5 rounded-lg border border-[#3e4042]' : 'text-[#e4e6eb] font-bold'}`}>
+                    {post.content}
+                  </p>
+                  
+                  <div className="flex gap-4 border-t border-[#3e4042] pt-2 mt-1 text-[11px] font-mono-data font-bold text-[#b0b3b8]">
+                    <button 
+                      onClick={() => handleLike(post.id)}
+                      className={`transition-colors flex items-center gap-1 ${post.user_liked ? 'text-[#2d88ff]' : 'hover:text-white'}`}
+                    >
+                      <i className="fa-solid fa-bolt"></i> {post.likes_count || 0} Likes
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/comments/${post.id}`, { state: { post } })} 
+                      className="hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      <i className="fa-solid fa-comment"></i> {post.comments_count || 0} Comments
+                    </button>
+                  </div>
                 </div>
-              );
-            })
-          )}
-        </div>
-      )}
+              ))
+            )}
+          </div>
+        )}
 
-      {selectedUserId && (
-        <ProfileCard 
-          userId={selectedUserId} 
-          currentUserId={myComicProfile?.id} 
-          onClose={() => setSelectedUserId(null)} 
-        />
-      )}
+        {sceneTab === 'directory' && (
+          <div className="flex flex-col gap-2.5 p-3">
+            <div className="relative">
+              <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#b0b3b8] text-xs"></i>
+              <input 
+                type="text" 
+                placeholder="Search local comics..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#242526] border border-[#3e4042] rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#2d88ff] transition-colors" 
+              />
+            </div>
+
+            {isLoadingDirectory ? (
+              <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest">
+                <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
+                Loading Comic Database...
+              </div>
+            ) : filteredDirectory.length === 0 ? (
+              <div className="text-center py-10 text-[10px] font-mono-data text-[#b0b3b8] uppercase tracking-widest bg-[#242526] border border-[#3e4042] rounded-xl shadow-sm">
+                No comics found.
+              </div>
+            ) : (
+              filteredDirectory.map(comic => {
+                const displayName = comic.name || comic.username || 'Comic User';
+                const displayUsername = comic.username || displayName.replace(/\s+/g, '').toLowerCase();
+
+                return (
+                  <div 
+                    key={comic.id || comic.user_id} 
+                    onClick={() => setSelectedUserId(comic.id || comic.user_id)} 
+                    className="bg-[#242526] border border-[#3e4042] p-3 rounded-xl flex justify-between items-center cursor-pointer hover:bg-gray-800 transition-colors shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      {comic.avatar_url ? (
+                        <img src={comic.avatar_url} alt={displayName} className="w-10 h-10 rounded-full object-cover border border-[#3e4042] shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center font-bold text-[#2d88ff] text-sm shrink-0">
+                          {displayName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="text-xs font-bold text-white truncate">{displayName}</h4>
+                        <p className="text-[10px] text-[#b0b3b8] font-mono-data truncate">@{displayUsername}</p>
+                      </div>
+                    </div>
+                    <i className="fa-solid fa-chevron-right text-[#b0b3b8] text-xs shrink-0"></i>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {selectedUserId && (
+          <ProfileCard 
+            userId={selectedUserId} 
+            currentUserId={myComicProfile?.id} 
+            onClose={() => setSelectedUserId(null)} 
+          />
+        )}
+      </div>
     </div>
   );
 }
-
