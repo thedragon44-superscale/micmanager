@@ -200,31 +200,37 @@ export default function Inbox() {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 animate-fade-in max-w-md mx-auto w-full flex-1 overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full animate-fade-in">
       
       {!activeThread ? (
         /* --- VIEW 1: THREAD LIST --- */
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3 pt-2">
-          <div className="flex justify-between items-center px-1 mb-1">
-            <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Direct Inbox</h1>
-            <button 
-              onClick={() => setShowNewChatModal(true)} 
-              className="bg-[#2d88ff] hover:bg-[#1b74e4] text-white text-[11px] font-mono-data font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors"
-            >
-              <i className="fa-solid fa-plus text-[10px]"></i> New Chat
-            </button>
+        <div className="flex flex-col h-full min-h-0">
+          
+          {/* FIXED TOP HEADER & SEARCH */}
+          <div className="flex-none p-3 pb-2 bg-[#18191a]">
+            <div className="flex justify-between items-center px-1 mb-2">
+              <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide">Direct Inbox</h1>
+              <button 
+                onClick={() => setShowNewChatModal(true)} 
+                className="bg-[#2d88ff] hover:bg-[#1b74e4] text-white text-[11px] font-mono-data font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <i className="fa-solid fa-plus text-[10px]"></i> New Chat
+              </button>
+            </div>
+
+            <div className="relative">
+              <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#b0b3b8] text-xs"></i>
+              <input 
+                type="text" 
+                placeholder="Search chats by name..." 
+                className="w-full bg-[#242526] border border-[#3e4042] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#2d88ff] transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="relative mb-1">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#b0b3b8] text-xs"></i>
-            <input 
-              type="text" 
-              placeholder="Search chats by name..." 
-              className="w-full bg-[#242526] border border-[#3e4042] rounded-xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#2d88ff] transition-colors"
-            />
-          </div>
-
-          <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm">
+          {/* SCROLLABLE THREAD LIST CONTAINER */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-1">
+            <div className="bg-[#242526] border border-[#3e4042] rounded-xl overflow-hidden shadow-sm">
             {isLoading ? (
               <div className="text-center py-12 text-[#b0b3b8] font-mono-data text-xs uppercase">
                 <i className="fa-solid fa-spinner animate-spin text-[#2d88ff] text-xl mb-2 block"></i>
@@ -265,6 +271,7 @@ export default function Inbox() {
             )}
           </div>
         </div>
+      </div>
       ) : (
         /* --- VIEW 2: ACTIVE DIRECT THREAD --- */
         <div className="flex flex-col h-full min-h-0 bg-[#18191a]">

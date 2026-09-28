@@ -116,7 +116,14 @@ export default function MyProfile() {
   // --- UNAUTHENTICATED: DB LOGIN / REGISTER SCREEN ---
   if (!myComicProfile) {
     return (
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-5 pb-6 animate-fade-in max-w-md mx-auto w-full my-auto">
+      <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full animate-fade-in">
+        {/* FIXED TOP HEADER */}
+        <div className="flex-none p-3 pb-0 bg-[#18191a]">
+          <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide px-1 mb-1">Comic Account</h1>
+        </div>
+
+        {/* SCROLLABLE FORM CONTAINER */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-2 flex flex-col justify-center my-auto">
         <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-5 shadow-sm">
           
           <div className="w-12 h-12 rounded-full bg-[#18191a] border border-[#3e4042] flex items-center justify-center text-[#2d88ff] text-lg mx-auto mb-3">
@@ -214,12 +221,20 @@ export default function MyProfile() {
           </form>
         </div>
       </div>
+    </div>
     );
   }
 
   // --- AUTHENTICATED PROFILE VIEW ---
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3 pb-6 animate-fade-in max-w-md mx-auto w-full">
+    <div className="flex flex-col h-full min-h-0 bg-[#18191a] max-w-md mx-auto w-full animate-fade-in">
+      {/* FIXED TOP HEADER */}
+      <div className="flex-none p-3 pb-0 bg-[#18191a]">
+        <h1 className="text-2xl font-black text-white uppercase font-display tracking-wide px-1 mb-1">My Profile</h1>
+      </div>
+
+      {/* SCROLLABLE PROFILE CONTENT CONTAINER */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-2 flex flex-col gap-3">
       
       {/* COMIC IDENTITY HEADER CARD */}
       <div className="bg-[#242526] border border-[#3e4042] rounded-xl p-4 flex flex-col items-center shadow-sm">
@@ -339,6 +354,7 @@ export default function MyProfile() {
         Sign Out Account
       </button>
 
+      </div>
     </div>
   );
 }
