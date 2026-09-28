@@ -33,7 +33,7 @@ export default function Scene() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          author_id: myComicProfile.id,
+          author_id: parseInt(myComicProfile.id),
           author_name: myComicProfile.name,
           content: newPostContent.trim(),
           market: market

@@ -951,9 +951,47 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
+class CreateFeedPostPayload(BaseModel):
+    author_id: int
+    author_name: str | None = None
+    content: str
+    market: str = "austin"
+
 @app.get("/feed", response_model=list[schemas.FeedPostResponse])
 def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_db)):
     return db.query(models.FeedPost).filter(models.FeedPost.market == market).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
+
+@app.post("/feed")
+def create_feed_post(payload: CreateFeedPostPayload, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == payload.author_id).first()
+    author_name = payload.author_name or (user.username if user else "Comic User")
+    market = payload.market or (user.home_market if user else "austin")
+
+    new_post = models.FeedPost(
+        author_id=payload.author_id,
+        content=payload.content,
+        post_type="user",
+        market=market
+    )
+    if hasattr(models.FeedPost, "author_name"):
+        setattr(new_post, "author_name", author_name)
+
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
+    return {
+        "id": new_post.id,
+        "author_id": new_post.author_id,
+        "author_name": getattr(new_post, "author_name", None) or author_name,
+        "content": new_post.content,
+        "market": new_post.market,
+        "timestamp": "Just now",
+        "likes_count": getattr(new_post, "likes_count", 0) or 0,
+        "comments_count": getattr(new_post, "comments_count", 0) or 0,
+        "user_liked": False,
+        "is_system": False
+    }
 
 @app.get("/feed/{post_id}")
 def get_feed_post(post_id: int, db: Session = Depends(get_db)):
