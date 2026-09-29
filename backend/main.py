@@ -22,7 +22,7 @@ load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
-# Ensure raw SQL social tables exist on startup
+# Ensure raw SQL social tables and feed post columns exist on startup
 with engine.connect() as conn:
     conn.execute(text("""
         CREATE TABLE IF NOT EXISTS feed_comments (
@@ -43,6 +43,15 @@ with engine.connect() as conn:
             user_id INTEGER NOT NULL
         );
     """))
+    
+    # Auto-migration: ensure feed_posts table has author_name, media_url, and media_type columns
+    for col in [("author_name", "TEXT"), ("media_url", "TEXT"), ("media_type", "TEXT")]:
+        try:
+            conn.execute(text(f"ALTER TABLE feed_posts ADD COLUMN {col[0]} {col[1]};"))
+            conn.commit()
+        except Exception:
+            pass # Column already exists
+
     conn.commit()
 
 # Initialize MinIO (S3) Client
@@ -950,9 +959,52 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
-@app.get("/feed", response_model=list[schemas.FeedPostResponse])
+@app.get("/feed")
 def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_db)):
-    return db.query(models.FeedPost).filter(models.FeedPost.market == market).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
+    posts = db.query(models.FeedPost).filter(
+        models.FeedPost.market == market
+    ).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
+
+    minio_public = os.getenv("PUBLIC_MINIO_URL") or os.getenv("MINIO_URL") or ""
+    minio_internal = os.getenv("MINIO_URL") or ""
+
+    result = []
+    for post in posts:
+        # Resolve author name from User model if not saved directly on post
+        author_name = getattr(post, "author_name", None)
+        if not author_name and getattr(post, "author_id", None):
+            user = db.query(models.User).filter(models.User.id == post.author_id).first()
+            if user:
+                author_name = user.username
+
+        media_url = getattr(post, "media_url", None)
+        media_type = getattr(post, "media_type", None)
+
+        # Fix Mixed Content: convert internal HTTP addresses to HTTPS public URLs
+        if media_url and minio_public:
+            if minio_internal and minio_internal in media_url:
+                media_url = media_url.replace(minio_internal, minio_public)
+            if media_url.startswith("http://") and "https://" in minio_public:
+                media_url = media_url.replace("http://", "https://")
+
+        is_sys = getattr(post, "is_system", False) or (getattr(post, "post_type", "") in ["mic_started", "mic_ended", "mic_listed"])
+
+        result.append({
+            "id": post.id,
+            "author_id": post.author_id,
+            "author_name": author_name or "Comic User",
+            "content": post.content or "",
+            "market": post.market,
+            "media_url": media_url,
+            "media_type": media_type,
+            "timestamp": post.created_at.strftime("%b %d, %I:%M %p") if hasattr(post, "created_at") and post.created_at else "Just now",
+            "likes_count": getattr(post, "likes_count", 0) or 0,
+            "comments_count": getattr(post, "comments_count", 0) or 0,
+            "user_liked": False,
+            "is_system": is_sys
+        })
+
+    return result
 
 @app.post("/feed")
 async def create_feed_post(
@@ -970,6 +1022,8 @@ async def create_feed_post(
     media_url = None
     media_type = None
 
+    minio_public = os.getenv("PUBLIC_MINIO_URL") or os.getenv("MINIO_URL") or ""
+
     if file and file.filename:
         timestamp = int(datetime.datetime.now().timestamp())
         content_type = file.content_type or ""
@@ -985,6 +1039,7 @@ async def create_feed_post(
                 if img.mode in ("RGBA", "P"):
                     img = img.convert("RGB")
 
+                # Auto-compress image to max 1080p width/height to save Pi disk space
                 img.thumbnail((1080, 1080), Image.Resampling.LANCZOS)
 
                 output_buffer = io.BytesIO()
@@ -997,7 +1052,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": "image/webp"}
                 )
-                media_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_key}"
+                media_url = f"{minio_public}/{MINIO_BUCKET}/{file_key}"
             except Exception as img_err:
                 print("Image processing error:", img_err)
                 raise HTTPException(status_code=500, detail="Failed to compress and upload image.")
@@ -1014,7 +1069,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": content_type}
                 )
-                media_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_key}"
+                media_url = f"{minio_public}/{MINIO_BUCKET}/{file_key}"
             except Exception as vid_err:
                 print("Video upload error:", vid_err)
                 raise HTTPException(status_code=500, detail="Failed to upload video.")
