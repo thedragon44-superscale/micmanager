@@ -21,7 +21,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 load_dotenv()
 
+from sqlalchemy import Column, String
+
 models.Base.metadata.create_all(bind=engine)
+
+# Dynamically bind missing social columns to FeedPost model class
+for attr in ["author_name", "media_url", "media_type"]:
+    if not hasattr(models.FeedPost, attr):
+        setattr(models.FeedPost, attr, Column(String, nullable=True))
 
 # Ensure raw SQL social tables and feed post columns exist on startup
 with engine.connect() as conn:
@@ -1099,12 +1106,9 @@ async def create_feed_post(
         market=clean_market
     )
 
-    if hasattr(models.FeedPost, "author_name"):
-        setattr(new_post, "author_name", clean_author_name)
-    if hasattr(models.FeedPost, "media_url"):
-        setattr(new_post, "media_url", media_url)
-    if hasattr(models.FeedPost, "media_type"):
-        setattr(new_post, "media_type", media_type)
+    new_post.author_name = clean_author_name
+    new_post.media_url = media_url
+    new_post.media_type = media_type
 
     db.add(new_post)
     db.commit()
