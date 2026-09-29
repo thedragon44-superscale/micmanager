@@ -41,9 +41,10 @@ export default function Scene() {
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
       return url;
     }
-    const cleanApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    // Extract base domain without /api suffix to avoid double /api/api
+    const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
     const cleanPath = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanApiUrl}${cleanPath}`;
+    return `${apiBase}${cleanPath}`;
   };
 
   const handleCreatePost = async () => {

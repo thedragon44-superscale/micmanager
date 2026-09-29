@@ -967,9 +967,9 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
-# --- SECURE MEDIA STREAMING PROXY (Dual route for Nginx / API compatibility) ---
-@app.get("/media/{bucket}/{key:path}")
+# --- SECURE MEDIA STREAMING PROXY (Routed via Nginx /api prefix) ---
 @app.get("/api/media/{bucket}/{key:path}")
+@app.get("/media/{bucket}/{key:path}")
 def proxy_media_file(bucket: str, key: str):
     try:
         s3_obj = s3_client.get_object(Bucket=bucket, Key=key)
@@ -981,7 +981,8 @@ def proxy_media_file(bucket: str, key: str):
                 "Access-Control-Allow-Origin": "*"
             }
         )
-    except Exception:
+    except Exception as err:
+        print("Media Proxy Error:", err)
         raise HTTPException(status_code=404, detail="Media file not found")
 
 
@@ -1002,14 +1003,14 @@ def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_
         raw_media = getattr(post, "media_url", None)
         media_type = getattr(post, "media_type", None)
 
-        # Standardize media_url to route through HTTPS media proxy
+        # Standardize media_url to start with /api/media/ for Nginx proxy compatibility
         media_url = None
         if raw_media:
             if "/media/" in raw_media:
-                media_url = f"/media/{raw_media.split('/media/')[-1]}"
+                media_url = f"/api/media/{raw_media.split('/media/')[-1]}"
             elif f"/{MINIO_BUCKET}/" in raw_media:
                 key_part = raw_media.split(f"/{MINIO_BUCKET}/")[-1]
-                media_url = f"/media/{MINIO_BUCKET}/{key_part}"
+                media_url = f"/api/media/{MINIO_BUCKET}/{key_part}"
             else:
                 media_url = raw_media
 
@@ -1077,7 +1078,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": "image/webp"}
                 )
-                media_url = f"/media/{MINIO_BUCKET}/{file_key}"
+                media_url = f"/api/media/{MINIO_BUCKET}/{file_key}"
             except Exception as img_err:
                 print("Image processing error:", img_err)
                 raise HTTPException(status_code=500, detail="Failed to compress and upload image.")
@@ -1094,7 +1095,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": content_type}
                 )
-                media_url = f"/media/{MINIO_BUCKET}/{file_key}"
+                media_url = f"/api/media/{MINIO_BUCKET}/{file_key}"
             except Exception as vid_err:
                 print("Video upload error:", vid_err)
                 raise HTTPException(status_code=500, detail="Failed to upload video.")
