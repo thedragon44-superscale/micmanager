@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import boto3
 from dotenv import load_dotenv
+from fastapi.responses import StreamingResponse
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks, status, UploadFile, File, Form, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -959,33 +960,50 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
+# --- SECURE MEDIA STREAMING PROXY ---
+@app.get("/media/{bucket}/{key:path}")
+def proxy_media_file(bucket: str, key: str):
+    try:
+        s3_obj = s3_client.get_object(Bucket=bucket, Key=key)
+        return StreamingResponse(
+            s3_obj['Body'],
+            media_type=s3_obj.get('ContentType', 'image/webp'),
+            headers={
+                "Cache-Control": "public, max-age=31536000",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+    except Exception:
+        raise HTTPException(status_code=404, detail="Media file not found")
+
+
 @app.get("/feed")
 def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_db)):
     posts = db.query(models.FeedPost).filter(
         models.FeedPost.market == market
     ).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
 
-    minio_public = os.getenv("PUBLIC_MINIO_URL") or os.getenv("MINIO_URL") or ""
-    minio_internal = os.getenv("MINIO_URL") or ""
-
     result = []
     for post in posts:
-        # Resolve author name from User model if not saved directly on post
         author_name = getattr(post, "author_name", None)
         if not author_name and getattr(post, "author_id", None):
             user = db.query(models.User).filter(models.User.id == post.author_id).first()
             if user:
                 author_name = user.username
 
-        media_url = getattr(post, "media_url", None)
+        raw_media = getattr(post, "media_url", None)
         media_type = getattr(post, "media_type", None)
 
-        # Fix Mixed Content: convert internal HTTP addresses to HTTPS public URLs
-        if media_url and minio_public:
-            if minio_internal and minio_internal in media_url:
-                media_url = media_url.replace(minio_internal, minio_public)
-            if media_url.startswith("http://") and "https://" in minio_public:
-                media_url = media_url.replace("http://", "https://")
+        # Standardize media_url to route through HTTPS media proxy
+        media_url = None
+        if raw_media:
+            if "/media/" in raw_media:
+                media_url = f"/media/{raw_media.split('/media/')[-1]}"
+            elif f"/{MINIO_BUCKET}/" in raw_media:
+                key_part = raw_media.split(f"/{MINIO_BUCKET}/")[-1]
+                media_url = f"/media/{MINIO_BUCKET}/{key_part}"
+            else:
+                media_url = raw_media
 
         is_sys = getattr(post, "is_system", False) or (getattr(post, "post_type", "") in ["mic_started", "mic_ended", "mic_listed"])
 
@@ -1006,6 +1024,7 @@ def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_
 
     return result
 
+
 @app.post("/feed")
 async def create_feed_post(
     author_id: int = Form(...),
@@ -1021,8 +1040,6 @@ async def create_feed_post(
 
     media_url = None
     media_type = None
-
-    minio_public = os.getenv("PUBLIC_MINIO_URL") or os.getenv("MINIO_URL") or ""
 
     if file and file.filename:
         timestamp = int(datetime.datetime.now().timestamp())
@@ -1052,7 +1069,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": "image/webp"}
                 )
-                media_url = f"{minio_public}/{MINIO_BUCKET}/{file_key}"
+                media_url = f"/media/{MINIO_BUCKET}/{file_key}"
             except Exception as img_err:
                 print("Image processing error:", img_err)
                 raise HTTPException(status_code=500, detail="Failed to compress and upload image.")
@@ -1069,7 +1086,7 @@ async def create_feed_post(
                     file_key,
                     ExtraArgs={"ContentType": content_type}
                 )
-                media_url = f"{minio_public}/{MINIO_BUCKET}/{file_key}"
+                media_url = f"/media/{MINIO_BUCKET}/{file_key}"
             except Exception as vid_err:
                 print("Video upload error:", vid_err)
                 raise HTTPException(status_code=500, detail="Failed to upload video.")
@@ -1098,8 +1115,8 @@ async def create_feed_post(
         "author_name": getattr(new_post, "author_name", None) or clean_author_name,
         "content": new_post.content,
         "market": new_post.market,
-        "media_url": getattr(new_post, "media_url", None) or media_url,
-        "media_type": getattr(new_post, "media_type", None) or media_type,
+        "media_url": media_url,
+        "media_type": media_type,
         "timestamp": "Just now",
         "likes_count": getattr(new_post, "likes_count", 0) or 0,
         "comments_count": getattr(new_post, "comments_count", 0) or 0,

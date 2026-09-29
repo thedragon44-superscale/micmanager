@@ -285,9 +285,17 @@ export default function Scene() {
                   {post.media_url && (
                     <div className="mt-1 rounded-xl overflow-hidden border border-[#3e4042] bg-black flex justify-center items-center max-h-72">
                       {post.media_type === 'video' ? (
-                        <video src={post.media_url} controls className="max-h-72 w-full object-contain" />
+                        <video 
+                          src={post.media_url.startsWith('http') ? post.media_url : `${import.meta.env.VITE_API_URL}${post.media_url}`} 
+                          controls 
+                          className="max-h-72 w-full object-contain" 
+                        />
                       ) : (
-                        <img src={post.media_url} alt="Post attachment" className="max-h-72 w-full object-contain" />
+                        <img 
+                          src={post.media_url.startsWith('http') ? post.media_url : `${import.meta.env.VITE_API_URL}${post.media_url}`} 
+                          alt="Post attachment" 
+                          className="max-h-72 w-full object-contain" 
+                        />
                       )}
                     </div>
                   )}
