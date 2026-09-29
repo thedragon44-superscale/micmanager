@@ -36,6 +36,16 @@ export default function Scene() {
     setFilePreview(null);
   };
 
+  const formatMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) {
+      return url;
+    }
+    const cleanApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanApiUrl}${cleanPath}`;
+  };
+
   const handleCreatePost = async () => {
     if (!myComicProfile?.id) {
       toast.error("You must be logged in to post.");
@@ -45,8 +55,10 @@ export default function Scene() {
 
     setIsPosting(true);
     try {
+      const parsedUserId = parseInt(myComicProfile.id) || 1;
+
       const formData = new FormData();
-      formData.append('author_id', parseInt(myComicProfile.id));
+      formData.append('author_id', parsedUserId);
       formData.append('author_name', myComicProfile.name || '');
       formData.append('content', newPostContent.trim());
       formData.append('market', market);
@@ -286,13 +298,13 @@ export default function Scene() {
                     <div className="mt-1 rounded-xl overflow-hidden border border-[#3e4042] bg-black flex justify-center items-center max-h-72">
                       {post.media_type === 'video' ? (
                         <video 
-                          src={post.media_url.startsWith('http') ? post.media_url : `${import.meta.env.VITE_API_URL}${post.media_url}`} 
+                          src={formatMediaUrl(post.media_url)} 
                           controls 
                           className="max-h-72 w-full object-contain" 
                         />
                       ) : (
                         <img 
-                          src={post.media_url.startsWith('http') ? post.media_url : `${import.meta.env.VITE_API_URL}${post.media_url}`} 
+                          src={formatMediaUrl(post.media_url)} 
                           alt="Post attachment" 
                           className="max-h-72 w-full object-contain" 
                         />

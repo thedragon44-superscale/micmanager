@@ -960,8 +960,9 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
-# --- SECURE MEDIA STREAMING PROXY ---
+# --- SECURE MEDIA STREAMING PROXY (Dual route for Nginx / API compatibility) ---
 @app.get("/media/{bucket}/{key:path}")
+@app.get("/api/media/{bucket}/{key:path}")
 def proxy_media_file(bucket: str, key: str):
     try:
         s3_obj = s3_client.get_object(Bucket=bucket, Key=key)
