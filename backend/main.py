@@ -1,3 +1,4 @@
+from typing import Optional
 import io
 from PIL import Image
 import os
@@ -16,10 +17,6 @@ import asyncio
 import sqlite3
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
-load_dotenv()
-
-models.Base.metadata.create_all(bind=engine)
 
 load_dotenv()
 
@@ -960,10 +957,10 @@ def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_
 @app.post("/feed")
 async def create_feed_post(
     author_id: int = Form(...),
-    author_name: str | None = Form(None),
-    content: str = Form(...),
-    market: str = Form("austin"),
-    file: UploadFile | None = File(None),
+    content: Optional[str] = Form(""),
+    author_name: Optional[str] = Form(None),
+    market: Optional[str] = Form("austin"),
+    file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     user = db.query(models.User).filter(models.User.id == author_id).first()
@@ -973,7 +970,7 @@ async def create_feed_post(
     media_url = None
     media_type = None
 
-    if file:
+    if file and file.filename:
         timestamp = int(datetime.datetime.now().timestamp())
         content_type = file.content_type or ""
 
@@ -981,12 +978,15 @@ async def create_feed_post(
             media_type = "image"
             file_key = f"feed_media/{author_id}_{timestamp}.webp"
 
-            # Compression logic for Pi storage optimization
             try:
-                img = Image.open(file.file)
-                # Resize if image exceeds 1080p width/height
+                raw_bytes = await file.read()
+                img = Image.open(io.BytesIO(raw_bytes))
+
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+
                 img.thumbnail((1080, 1080), Image.Resampling.LANCZOS)
-                
+
                 output_buffer = io.BytesIO()
                 img.save(output_buffer, format="WEBP", quality=75, optimize=True)
                 output_buffer.seek(0)
@@ -999,7 +999,7 @@ async def create_feed_post(
                 )
                 media_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_key}"
             except Exception as img_err:
-                print("Image compression error:", img_err)
+                print("Image processing error:", img_err)
                 raise HTTPException(status_code=500, detail="Failed to compress and upload image.")
 
         elif content_type.startswith("video/"):
@@ -1021,7 +1021,7 @@ async def create_feed_post(
 
     new_post = models.FeedPost(
         author_id=author_id,
-        content=content,
+        content=content or "",
         post_type="user",
         market=clean_market
     )
