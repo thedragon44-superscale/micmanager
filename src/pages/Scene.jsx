@@ -16,35 +16,55 @@ export default function Scene() {
   const [isLoadingDirectory, setIsLoadingDirectory] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
-  // New Post State
+  // New Post & Media Upload State
   const [newPostContent, setNewPostContent] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setFilePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    if (filePreview) URL.revokeObjectURL(filePreview);
+    setFilePreview(null);
+  };
 
   const handleCreatePost = async () => {
     if (!myComicProfile?.id) {
       toast.error("You must be logged in to post.");
       return;
     }
-    if (!newPostContent.trim()) return;
+    if (!newPostContent.trim() && !selectedFile) return;
 
     setIsPosting(true);
     try {
+      const formData = new FormData();
+      formData.append('author_id', parseInt(myComicProfile.id));
+      formData.append('author_name', myComicProfile.name || '');
+      formData.append('content', newPostContent.trim());
+      formData.append('market', market);
+
+      if (selectedFile) {
+        formData.append('file', selectedFile);
+      }
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/feed`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          author_id: parseInt(myComicProfile.id),
-          author_name: myComicProfile.name,
-          content: newPostContent.trim(),
-          market: market
-        })
+        body: formData
       });
 
       if (res.ok) {
         const createdPost = await res.json();
         toast.success("Post published!");
         setNewPostContent('');
-        // Add new post to top of feed immediately
+        handleRemoveFile();
         const newPostObj = createdPost.post || createdPost;
         setFeed(prev => [newPostObj, ...prev]);
       } else {
@@ -164,16 +184,45 @@ export default function Scene() {
               <textarea
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
-                placeholder={myComicProfile ? "Share an update, set recap, or stage announcement..." : "Sign in to post updates..."}
+                placeholder={myComicProfile ? "Share an update, photo, video set recap..." : "Sign in to post updates..."}
                 disabled={!myComicProfile || isPosting}
                 rows={2}
                 className="w-full bg-[#18191a] border border-[#3e4042] rounded-lg p-2.5 text-xs text-white placeholder-[#b0b3b8] focus:outline-none focus:border-[#2d88ff] resize-none font-sans"
               />
 
-              <div className="flex justify-end">
+              {/* MEDIA ATTACHMENT PREVIEW */}
+              {filePreview && (
+                <div className="relative rounded-lg overflow-hidden border border-[#3e4042] max-h-48 bg-black flex justify-center items-center">
+                  <button
+                    onClick={handleRemoveFile}
+                    className="absolute top-1.5 right-1.5 bg-black/70 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs z-10 hover:bg-red-600 transition-colors"
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                  {selectedFile?.type.startsWith('video/') ? (
+                    <video src={filePreview} className="max-h-48 w-full object-contain" controls />
+                  ) : (
+                    <img src={filePreview} alt="Upload preview" className="max-h-48 w-full object-contain" />
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-1">
+                <label className={`cursor-pointer text-[#b0b3b8] hover:text-[#2d88ff] flex items-center gap-1.5 text-xs font-mono-data ${!myComicProfile || isPosting ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <i className="fa-solid fa-paperclip"></i>
+                  <span className="text-[10px] uppercase font-bold">Attach Media</span>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileChange}
+                    disabled={!myComicProfile || isPosting}
+                    className="hidden"
+                  />
+                </label>
+
                 <button
                   onClick={handleCreatePost}
-                  disabled={!myComicProfile || !newPostContent.trim() || isPosting}
+                  disabled={!myComicProfile || (!newPostContent.trim() && !selectedFile) || isPosting}
                   className="bg-[#2d88ff] hover:bg-[#1b74e4] disabled:opacity-40 text-white font-bold px-3.5 py-1.5 rounded-lg text-[10px] font-mono-data uppercase tracking-wider transition-colors flex items-center gap-1.5"
                 >
                   {isPosting ? (
@@ -226,9 +275,22 @@ export default function Scene() {
                     )}
                   </div>
                   
-                  <p className={`text-xs leading-relaxed mt-1 ${post.is_system ? 'text-amber-100 font-mono-data bg-[#18191a] p-2.5 rounded-lg border border-[#3e4042]' : 'text-[#e4e6eb] font-bold'}`}>
-                    {post.content}
-                  </p>
+                  {post.content && (
+                    <p className={`text-xs leading-relaxed mt-1 ${post.is_system ? 'text-amber-100 font-mono-data bg-[#18191a] p-2.5 rounded-lg border border-[#3e4042]' : 'text-[#e4e6eb] font-bold'}`}>
+                      {post.content}
+                    </p>
+                  )}
+
+                  {/* MEDIA DISPLAY IN FEED */}
+                  {post.media_url && (
+                    <div className="mt-1 rounded-xl overflow-hidden border border-[#3e4042] bg-black flex justify-center items-center max-h-72">
+                      {post.media_type === 'video' ? (
+                        <video src={post.media_url} controls className="max-h-72 w-full object-contain" />
+                      ) : (
+                        <img src={post.media_url} alt="Post attachment" className="max-h-72 w-full object-contain" />
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex gap-4 border-t border-[#3e4042] pt-2 mt-1 text-[11px] font-mono-data font-bold text-[#b0b3b8]">
                     <button 

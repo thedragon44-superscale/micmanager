@@ -1,3 +1,5 @@
+import io
+from PIL import Image
 import os
 import boto3
 from dotenv import load_dotenv
@@ -951,30 +953,85 @@ class FeedCommentPayload(BaseModel):
     content: str
     timestamp: str
 
-class CreateFeedPostPayload(BaseModel):
-    author_id: int
-    author_name: str | None = None
-    content: str
-    market: str = "austin"
-
 @app.get("/feed", response_model=list[schemas.FeedPostResponse])
 def get_feed(market: str = "austin", limit: int = 50, db: Session = Depends(get_db)):
     return db.query(models.FeedPost).filter(models.FeedPost.market == market).order_by(models.FeedPost.created_at.desc()).limit(limit).all()
 
 @app.post("/feed")
-def create_feed_post(payload: CreateFeedPostPayload, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == payload.author_id).first()
-    author_name = payload.author_name or (user.username if user else "Comic User")
-    market = payload.market or (user.home_market if user else "austin")
+async def create_feed_post(
+    author_id: int = Form(...),
+    author_name: str | None = Form(None),
+    content: str = Form(...),
+    market: str = Form("austin"),
+    file: UploadFile | None = File(None),
+    db: Session = Depends(get_db)
+):
+    user = db.query(models.User).filter(models.User.id == author_id).first()
+    clean_author_name = author_name or (user.username if user else "Comic User")
+    clean_market = market or (user.home_market if user else "austin")
+
+    media_url = None
+    media_type = None
+
+    if file:
+        timestamp = int(datetime.datetime.now().timestamp())
+        content_type = file.content_type or ""
+
+        if content_type.startswith("image/"):
+            media_type = "image"
+            file_key = f"feed_media/{author_id}_{timestamp}.webp"
+
+            # Compression logic for Pi storage optimization
+            try:
+                img = Image.open(file.file)
+                # Resize if image exceeds 1080p width/height
+                img.thumbnail((1080, 1080), Image.Resampling.LANCZOS)
+                
+                output_buffer = io.BytesIO()
+                img.save(output_buffer, format="WEBP", quality=75, optimize=True)
+                output_buffer.seek(0)
+
+                s3_client.upload_fileobj(
+                    output_buffer,
+                    MINIO_BUCKET,
+                    file_key,
+                    ExtraArgs={"ContentType": "image/webp"}
+                )
+                media_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_key}"
+            except Exception as img_err:
+                print("Image compression error:", img_err)
+                raise HTTPException(status_code=500, detail="Failed to compress and upload image.")
+
+        elif content_type.startswith("video/"):
+            media_type = "video"
+            ext = file.filename.split(".")[-1] if "." in file.filename else "mp4"
+            file_key = f"feed_media/{author_id}_{timestamp}.{ext}"
+
+            try:
+                s3_client.upload_fileobj(
+                    file.file,
+                    MINIO_BUCKET,
+                    file_key,
+                    ExtraArgs={"ContentType": content_type}
+                )
+                media_url = f"{os.getenv('MINIO_URL')}/{MINIO_BUCKET}/{file_key}"
+            except Exception as vid_err:
+                print("Video upload error:", vid_err)
+                raise HTTPException(status_code=500, detail="Failed to upload video.")
 
     new_post = models.FeedPost(
-        author_id=payload.author_id,
-        content=payload.content,
+        author_id=author_id,
+        content=content,
         post_type="user",
-        market=market
+        market=clean_market
     )
+
     if hasattr(models.FeedPost, "author_name"):
-        setattr(new_post, "author_name", author_name)
+        setattr(new_post, "author_name", clean_author_name)
+    if hasattr(models.FeedPost, "media_url"):
+        setattr(new_post, "media_url", media_url)
+    if hasattr(models.FeedPost, "media_type"):
+        setattr(new_post, "media_type", media_type)
 
     db.add(new_post)
     db.commit()
@@ -983,9 +1040,11 @@ def create_feed_post(payload: CreateFeedPostPayload, db: Session = Depends(get_d
     return {
         "id": new_post.id,
         "author_id": new_post.author_id,
-        "author_name": getattr(new_post, "author_name", None) or author_name,
+        "author_name": getattr(new_post, "author_name", None) or clean_author_name,
         "content": new_post.content,
         "market": new_post.market,
+        "media_url": getattr(new_post, "media_url", None) or media_url,
+        "media_type": getattr(new_post, "media_type", None) or media_type,
         "timestamp": "Just now",
         "likes_count": getattr(new_post, "likes_count", 0) or 0,
         "comments_count": getattr(new_post, "comments_count", 0) or 0,
